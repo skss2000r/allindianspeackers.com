@@ -120,7 +120,7 @@ export async function action({ request }: Route.ActionArgs) {
 	return { done: true as const };
 }
 
-export default function BecomeASpeaker() {
+export default function BecomeASpeaker({ loaderData }: Route.ComponentProps) {
 	const result = useActionData<typeof action>();
 	const navigation = useNavigation();
 	const busy = navigation.state === 'submitting';
