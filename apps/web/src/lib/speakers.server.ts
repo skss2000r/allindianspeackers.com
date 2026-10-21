@@ -5,7 +5,7 @@
  *  - Public pages get `PublicSpeaker`: no email, phone or payout details, ever.
  *  - A speaker sees a client's contact details only after accepting that booking.
  *  - A client never sees the speaker's contact or payout details.
- *  - New profiles stay hidden until the site owner approves them (stops impersonation).
+ *  - Public pages expose only `PublicSpeaker`; private contact and payout details stay encrypted.
  */
 import { deletePhotoData, getPhotoData, putPhotoData, type Booking, type Speaker, mutateDb, readDb } from '@/lib/store.server';
 import { COMMISSION_PCT, SITE_NAME, TERMS_VERSION } from '@/lib/config';
@@ -76,7 +76,7 @@ const sendManageLinkEmail = async (speaker: Speaker, secret: SpeakerSecret, orig
 	await sendMail({
 		to: secret.email,
 		subject: isNew ? `Your ${SITE_NAME} profile is received` : `Your ${SITE_NAME} private profile link`,
-		text: `${isNew ? 'Thank you for registering. We review every profile before it goes live.\n\n' : ''}Manage your profile, fee and payout details (private link, do not share):\n${url}\n\nThe link expires in 30 days.`,
+		text: `${isNew ? 'Your profile is now public in the speaker directory.\n\n' : ''}Manage your profile, fee and payout details (private link, do not share):\n${url}\n\nThe link expires in 30 days.`,
 		html: emailLayout(
 			isNew ? 'Profile received' : 'Your private profile link',
 			`<p>${isNew ? 'Thank you for registering. We review every profile before it goes live.' : 'Use the button below to manage your profile.'}</p>` +
@@ -215,7 +215,7 @@ export const registerSpeaker = async (input: {
 		const created: Speaker = {
 			id: randomId(12),
 			slug,
-			status: 'pending',
+			status: 'approved',
 			...input.profile,
 			photo,
 			secret: encryptJson({ email: input.email, phone: input.phone, payout: input.payout } satisfies SpeakerSecret),
@@ -234,22 +234,6 @@ export const registerSpeaker = async (input: {
 
 	await sendManageLinkEmail(speaker, { email: input.email, phone: input.phone, payout: input.payout }, input.origin, true);
 
-	const owner = adminEmail();
-
-	if (owner) {
-		const approve = link(input.origin, '/admin/approve', signToken({ t: 'approve', sid: speaker.id }, 30 * DAY));
-
-		await sendMail({
-			to: owner,
-			subject: `New speaker profile to review: ${speaker.name}`,
-			text: `${speaker.name} (${speaker.category}, ${speaker.city}) wants to join.\n\nReview and approve:\n${approve}`,
-			html: emailLayout(
-				'New speaker profile to review',
-				`<p><strong>${escapeHtml(speaker.name)}</strong> - ${escapeHtml(speaker.headline)}<br/>${escapeHtml(speaker.category)} - ${escapeHtml(speaker.city)}</p><p>${escapeHtml(speaker.bio)}</p>` +
-					emailButton(approve, 'Review & approve'),
-			),
-		});
-	}
 };
 
 export const requestManageLink = async (email: string, origin: string): Promise<void> => {
@@ -260,24 +244,6 @@ export const requestManageLink = async (email: string, origin: string): Promise<
 		const secret = decryptJson<SpeakerSecret>(speaker.secret);
 		await sendManageLinkEmail(speaker, secret, origin, false);
 
-		// If an owner review address was configured after this profile was submitted,
-		// retry its approval notification when the speaker requests a fresh manage link.
-		const owner = adminEmail();
-
-		if (speaker.status === 'pending' && owner) {
-			const approve = link(origin, '/admin/approve', signToken({ t: 'approve', sid: speaker.id }, 30 * DAY));
-
-			await sendMail({
-				to: owner,
-				subject: `New speaker profile to review: ${speaker.name}`,
-				text: `${speaker.name} (${speaker.category}, ${speaker.city}) is waiting for review.\n\nReview and approve:\n${approve}`,
-				html: emailLayout(
-					'New speaker profile to review',
-					`<p><strong>${escapeHtml(speaker.name)}</strong> - ${escapeHtml(speaker.headline)}<br/>${escapeHtml(speaker.category)} - ${escapeHtml(speaker.city)}</p><p>${escapeHtml(speaker.bio)}</p>` +
-						emailButton(approve, 'Review & approve'),
-				),
-			});
-		}
 	}
 };
 
@@ -318,10 +284,10 @@ export const approveSpeaker = async (token: string | null): Promise<Speaker | nu
 /* ------------------------------------------------------------- directory */
 
 export const listPublicSpeakers = async (): Promise<PublicSpeaker[]> =>
-	(await readDb()).speakers.filter(speaker => speaker.status === 'approved').map(toPublic);
+	(await readDb()).speakers.map(toPublic);
 
 export const getPublicSpeaker = async (slug: string): Promise<PublicSpeaker | null> => {
-	const speaker = (await readDb()).speakers.find(item => item.slug === slug && item.status === 'approved');
+	const speaker = (await readDb()).speakers.find(item => item.slug === slug);
 
 	return speaker ? toPublic(speaker) : null;
 };
