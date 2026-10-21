@@ -7,7 +7,7 @@ import { allowLink, allowManage, TOO_MANY } from '@/lib/limits.server';
 import { seo } from '@/lib/seo';
 import { assertSameOrigin, trustedOrigin } from '@/lib/security.server';
 import { echoValues, parseContact, parsePayout, parseProfile, photoFrom } from '@/lib/speaker-forms.server';
-import { loadManageView, requestManageLink, updateSpeaker } from '@/lib/speakers.server';
+import { deleteSpeakerProfile, loadManageView, requestManageLink, updateSpeaker } from '@/lib/speakers.server';
 
 export function meta({ matches, location }: Route.MetaArgs) {
 	return seo({ matches, location }, { title: 'Manage your profile — All Indian Speakers', description: 'Private speaker dashboard.', noindex: true });
@@ -53,6 +53,25 @@ export async function action({ request }: Route.ActionArgs) {
 
 		// Identical answer whether or not the address exists.
 		return { intent: 'resend' as const, sent: true as const };
+	}
+
+	if (intent === 'delete') {
+		if (!(await allowManage(request))) {
+			return data({ intent: 'delete' as const, errors: { form: TOO_MANY } }, { status: 429 });
+		}
+
+		if (form.get('confirmDelete') !== 'DELETE') {
+			return data({ intent: 'delete' as const, errors: { form: 'Type DELETE exactly to confirm profile removal.' } }, { status: 400 });
+		}
+
+		const token = String(form.get('t') ?? '');
+		const deleted = await deleteSpeakerProfile(token);
+
+		if (!deleted) {
+			throw new Response('This link is invalid or has expired', { status: 403 });
+		}
+
+		return { intent: 'delete' as const, deleted: true as const };
 	}
 
 	if (!(await allowManage(request))) {
@@ -108,6 +127,17 @@ export default function Manage({ loaderData }: Route.ComponentProps) {
 	const busy = useNavigation().state === 'submitting';
 	const errors = (result && 'errors' in result ? result.errors : {}) as Record<string, string>;
 	const values = (result && 'values' in result ? result.values : {}) as Record<string, string>;
+
+	if (result && 'deleted' in result) {
+		return (
+			<main className="detail">
+				<div className="eyebrow">PROFILE REMOVED</div>
+				<h1>Your profile has been deleted.</h1>
+				<p>Your profile and photo are no longer available. Existing booking records are retained for business history. You can create a new profile any time.</p>
+				<Link className="action" to="/become-a-speaker">Create a new profile ↗</Link>
+			</main>
+		);
+	}
 
 	if (!view) {
 		return (
@@ -172,6 +202,18 @@ export default function Manage({ loaderData }: Route.ComponentProps) {
 				<PayoutFields values={values} errors={errors} optional />
 				<button className="action" disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</button>
 			</Form>
+			<section className="panel" aria-labelledby="delete-profile-heading">
+				<h2 id="delete-profile-heading">Delete your profile</h2>
+				<p>This permanently removes your profile details and photo. Existing booking records are retained for business history. You can create another profile later.</p>
+				<Form method="post" className="form">
+					<input type="hidden" name="intent" value="delete" />
+					<input type="hidden" name="t" value={token} />
+					<Field label="Type DELETE to confirm" error={result && 'intent' in result && result.intent === 'delete' && 'errors' in result ? result.errors.form : undefined}>
+						<input name="confirmDelete" required pattern="DELETE" autoComplete="off" />
+					</Field>
+					<button className="action" disabled={busy}>{busy ? 'Deleting…' : 'Permanently delete my profile'}</button>
+				</Form>
+			</section>
 		</main>
 	);
 }
