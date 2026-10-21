@@ -17,5 +17,6 @@ export default [
 	route('sitemap.xml', 'routes/sitemap.xml.ts'),
 	route('robots.txt', 'routes/robots.txt.ts'),
 	route('api/health', 'routes/api.health.ts'),
+	route('api/profile-suggestions', 'routes/api.profile-suggestions.ts'),
 	route('api/*', 'routes/api.$.ts'),
 ] satisfies RouteConfig;
