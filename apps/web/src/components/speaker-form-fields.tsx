@@ -1,12 +1,23 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Field } from '@/components/form-field';
 import { SPEAKER_CATEGORIES, SPEAKER_SPECIALTIES } from '@/lib/config';
 
 type Values = Record<string, string | undefined>;
 type SearchResult = { title: string; snippet: string; url: string; displayLink: string };
 type ProfileSuggestion = { name: string; headline: string; bio: string; category: string; specialties: string[]; languages: string[]; city: string; linkedinUrl: string; instagramUrl: string; youtubeUrl: string; websiteUrl: string };
+type LinkedInProfile = { name: string; email: string };
 
-export function ProfileFields({ values = {}, errors = {} }: { values?: Values; errors?: Record<string, string> }) {
+export function ProfileFields({
+	values = {},
+	errors = {},
+	linkedinProfile = null,
+	linkedinMessage = '',
+}: {
+	values?: Values;
+	errors?: Record<string, string>;
+	linkedinProfile?: LinkedInProfile | null;
+	linkedinMessage?: string;
+}) {
 	const [profileName, setProfileName] = useState(values.name ?? '');
 	const [identifier, setIdentifier] = useState('');
 	const [searchBusy, setSearchBusy] = useState(false);
@@ -14,51 +25,8 @@ export function ProfileFields({ values = {}, errors = {} }: { values?: Values; e
 	const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
 	const [searchSuggestions, setSearchSuggestions] = useState<ProfileSuggestion | null>(null);
 	const [searchNotice, setSearchNotice] = useState('');
-	const linkedinPopup = useRef<Window | null>(null);
-	const [linkedinNotice, setLinkedinNotice] = useState('');
+	const [linkedinNotice, setLinkedinNotice] = useState(linkedinMessage);
 	const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(`${identifier || profileName} speaker`)}`;
-
-	useEffect(() => {
-		const onMessage = (event: MessageEvent) => {
-			if (event.origin !== window.location.origin || event.source !== linkedinPopup.current) return;
-			const message = event.data as { type?: unknown; profile?: unknown; message?: unknown };
-
-			if (message?.type !== 'linkedin-profile-import') return;
-			const profile = message.profile as { name?: unknown; email?: unknown } | null;
-
-			if (profile && typeof profile.name === 'string' && profile.name.trim()) {
-				setProfileName(profile.name.slice(0, 80));
-				const form = document.querySelector('form.form');
-				const emailField = form instanceof HTMLFormElement ? form.elements.namedItem('email') : null;
-
-				if (emailField instanceof HTMLInputElement && typeof profile.email === 'string') {
-					const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
-					setter?.call(emailField, profile.email.slice(0, 254));
-					emailField.dispatchEvent(new Event('input', { bubbles: true }));
-					emailField.dispatchEvent(new Event('change', { bubbles: true }));
-				}
-
-				setLinkedinNotice('LinkedIn name and email imported. Review them before submitting; this does not verify your identity.');
-			} else {
-				setLinkedinNotice(typeof message.message === 'string' ? message.message : 'LinkedIn profile details could not be imported.');
-			}
-		};
-
-		window.addEventListener('message', onMessage);
-		return () => window.removeEventListener('message', onMessage);
-	}, []);
-
-	const connectLinkedIn = () => {
-		const popup = window.open('/auth/linkedin', 'linkedin-profile-import', 'popup,width=600,height=700');
-
-		if (!popup) {
-			setLinkedinNotice('Allow this pop-up to connect your LinkedIn account.');
-			return;
-		}
-
-		linkedinPopup.current = popup;
-		setLinkedinNotice('Complete LinkedIn sign-in in the pop-up window.');
-	};
 
 	const setFormValue = (name: string, value: string) => {
 		const form = document.querySelector('form.form');
@@ -70,6 +38,31 @@ export function ProfileFields({ values = {}, errors = {} }: { values?: Values; e
 			field.dispatchEvent(new Event('input', { bubbles: true }));
 			field.dispatchEvent(new Event('change', { bubbles: true }));
 		}
+	};
+
+	useEffect(() => {
+		if (linkedinProfile?.name) setProfileName(linkedinProfile.name.slice(0, 80));
+		if (linkedinProfile?.email) setFormValue('email', linkedinProfile.email.slice(0, 254));
+		if (linkedinMessage) setLinkedinNotice(linkedinMessage);
+
+		try {
+			const savedIdentifier = sessionStorage.getItem('speaker-social-identifier');
+			if (savedIdentifier) {
+				setIdentifier(savedIdentifier.slice(0, 300));
+				sessionStorage.removeItem('speaker-social-identifier');
+			}
+		} catch {
+			// Storage may be unavailable; LinkedIn import still works.
+		}
+	}, [linkedinProfile, linkedinMessage]);
+
+	const connectLinkedIn = () => {
+		try {
+			sessionStorage.setItem('speaker-social-identifier', identifier.trim());
+		} catch {
+			// Keep the flow usable when browser storage is unavailable.
+		}
+		window.location.assign('/auth/linkedin');
 	};
 
 	const searchProfile = async () => {
@@ -163,7 +156,7 @@ export function ProfileFields({ values = {}, errors = {} }: { values?: Values; e
 		<>
 			<fieldset className="panel">
 				<legend>Find your public profile</legend>
-				<p className="hint">Enter one social profile link or @handle. Google will find public results; AI can draft editable profile fields from those results.</p>
+				<p className="hint">Enter one social profile link or @handle. The site sends this identifier and public Google snippets to Google and Gemini to draft editable fields. Nothing is saved until you submit the profile.</p>
 				<Field label="Social profile URL or @handle">
 					<input value={identifier} onChange={event => setIdentifier(event.target.value)} maxLength={300} placeholder="https://linkedin.com/in/... or @yourname" autoComplete="url" />
 				</Field>
@@ -184,7 +177,7 @@ export function ProfileFields({ values = {}, errors = {} }: { values?: Values; e
 						<button type="button" onClick={() => useSearchResult(result)}>Use this result</button>
 					</article>)}
 				</div>}
-				<button type="button" onClick={connectLinkedIn}>Fill name and email from LinkedIn ↗</button>
+				<button type="button" onClick={connectLinkedIn}>Import name and email from LinkedIn ↗</button>
 				{linkedinNotice && <p className="hint" role="status">{linkedinNotice}</p>}
 				<a className="hint" href={googleSearchUrl} target="_blank" rel="noreferrer">Open this search in Google ↗</a>
 			</fieldset>
