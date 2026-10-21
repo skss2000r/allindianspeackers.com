@@ -48,7 +48,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 	}
 
 	if (form.get('website')) {
-		return { sent: true as const };
+		return { sent: true as const, speakerNotified: true, clientNotified: true };
 	}
 
 	const values = Object.fromEntries(KEYS.map(key => [key, typeof form.get(key) === 'string' ? String(form.get(key)) : '']));
