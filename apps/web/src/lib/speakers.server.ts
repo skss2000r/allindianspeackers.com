@@ -257,7 +257,27 @@ export const requestManageLink = async (email: string, origin: string): Promise<
 	const speaker = (await readDb()).speakers.find(item => item.emailIndex === index);
 
 	if (speaker) {
-		await sendManageLinkEmail(speaker, decryptJson<SpeakerSecret>(speaker.secret), origin, false);
+		const secret = decryptJson<SpeakerSecret>(speaker.secret);
+		await sendManageLinkEmail(speaker, secret, origin, false);
+
+		// If an owner review address was configured after this profile was submitted,
+		// retry its approval notification when the speaker requests a fresh manage link.
+		const owner = adminEmail();
+
+		if (speaker.status === 'pending' && owner) {
+			const approve = link(origin, '/admin/approve', signToken({ t: 'approve', sid: speaker.id }, 30 * DAY));
+
+			await sendMail({
+				to: owner,
+				subject: `New speaker profile to review: ${speaker.name}`,
+				text: `${speaker.name} (${speaker.category}, ${speaker.city}) is waiting for review.\n\nReview and approve:\n${approve}`,
+				html: emailLayout(
+					'New speaker profile to review',
+					`<p><strong>${escapeHtml(speaker.name)}</strong> - ${escapeHtml(speaker.headline)}<br/>${escapeHtml(speaker.category)} - ${escapeHtml(speaker.city)}</p><p>${escapeHtml(speaker.bio)}</p>` +
+						emailButton(approve, 'Review & approve'),
+				),
+			});
+		}
 	}
 };
 
