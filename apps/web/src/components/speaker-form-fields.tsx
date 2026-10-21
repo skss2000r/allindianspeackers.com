@@ -95,7 +95,7 @@ export function ProfileFields({
 			setSearchSuggestions(payload.suggestions ?? null);
 
 			if (payload.results?.length && !payload.aiAvailable) {
-				setSearchNotice('Google found public results, but AI suggestions are not configured. Review a result or complete the fields yourself.');
+				setSearchNotice('Google found public results, but AI suggestions are unavailable right now. Review a result or complete the fields yourself.');
 			}
 
 			if (!payload.results?.length) {
