@@ -5,10 +5,15 @@ import { SPEAKER_CATEGORIES, SPEAKER_SPECIALTIES } from '@/lib/config';
 type Values = Record<string, string | undefined>;
 
 export function ProfileFields({ values = {}, errors = {} }: { values?: Values; errors?: Record<string, string> }) {
+	const [profileName, setProfileName] = useState(values.name ?? '');
+	const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(`${profileName} speaker LinkedIn`)}`;
+
 	return (
 		<>
 			<Field label="Full / stage name" error={errors.name}>
-				<input name="name" required minLength={2} maxLength={80} defaultValue={values.name} autoComplete="name" />
+				<input name="name" required minLength={2} maxLength={80} value={profileName} onChange={event => setProfileName(event.target.value)} autoComplete="name" />
+				{profileName.trim().length > 1 && <a className="hint" href={googleSearchUrl} target="_blank" rel="noreferrer">Search Google for this speaker ↗</a>}
+				<p className="hint">Search results are suggestions. Confirm they describe you, then copy your public details and profile links into this form.</p>
 			</Field>
 			<Field label="One-line headline" error={errors.headline} hint="e.g. Olympic medallist & motivational speaker">
 				<input name="headline" maxLength={120} defaultValue={values.headline} />
