@@ -453,6 +453,34 @@ export const updateSpeaker = async (
 	return ok;
 };
 
+/** Permanently removes the profile and its photo using the owner's signed management link. */
+export const deleteSpeakerProfile = async (token: string | null): Promise<boolean> => {
+	const payload = verifyToken(token, 'manage');
+
+	if (!payload) {
+		return false;
+	}
+
+	let photo: string | null = null;
+	const deleted = await mutateDb(db => {
+		const index = db.speakers.findIndex(item => item.id === payload.sid);
+
+		if (index < 0) {
+			return false;
+		}
+
+		photo = db.speakers[index].photo;
+		db.speakers.splice(index, 1);
+		return true;
+	});
+
+	if (deleted) {
+		await removePhoto(photo);
+	}
+
+	return deleted;
+};
+
 /* -------------------------------------------------------------- bookings */
 
 export type BookingInput = {
