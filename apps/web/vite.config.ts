@@ -51,7 +51,7 @@ export default defineConfig({
 		},
 	},
 	ssr: {
-		noExternal: ['sanitize-html', 'htmlparser2'],
+		noExternal: ['sanitize-html', 'htmlparser2', 'escape-string-regexp'],
 	},
 	preview: {
 		port: 3000,
