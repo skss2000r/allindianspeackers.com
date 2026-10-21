@@ -80,3 +80,7 @@ body{overflow-x:hidden;overflow-x:clip}
 @media(max-width:700px){.hero-art{top:46%;right:-12%;width:clamp(190px,56vw,280px);opacity:.48}.hero-ribbon{height:32%}}
 @media(max-width:380px){.hero-art{right:-18%;top:44%;width:205px;opacity:.38}}
 @media(prefers-reduced-motion:reduce){.hero-ribbon-one,.hero-ribbon-two{animation:none;transform:rotateX(62deg) rotateZ(-22deg)}}
+
+/* Replace the decorative hero ribbon with a clear pink primary action. */
+.hero-art{display:none}
+.hero-bottom .action{background:var(--pink);color:var(--jet)}
