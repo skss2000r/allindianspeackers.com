@@ -76,10 +76,10 @@ const sendManageLinkEmail = async (speaker: Speaker, secret: SpeakerSecret, orig
 	await sendMail({
 		to: secret.email,
 		subject: isNew ? `Your ${SITE_NAME} profile is received` : `Your ${SITE_NAME} private profile link`,
-		text: `${isNew ? 'Your profile has been received and is awaiting review.\n\n' : ''}Manage your profile, fee and payout details (private link, do not share):\n${url}\n\nThe link expires in 30 days.`,
+		text: `${isNew ? 'Your profile is now live in the speaker directory.\n\n' : ''}Manage your profile, fee and payout details (private link, do not share):\n${url}\n\nThe link expires in 30 days.`,
 		html: emailLayout(
 			isNew ? 'Profile received' : 'Your private profile link',
-			`<p>${isNew ? 'Thank you for registering. We review every profile before it goes live.' : 'Use the button below to manage your profile.'}</p>` +
+			`<p>${isNew ? 'Thank you for registering. Your profile is now live in the speaker directory.' : 'Use the button below to manage your profile.'}</p>` +
 				emailButton(url, 'Manage my profile') +
 				'<p style="font-size:13px;color:#666">This link is private - anyone who has it can edit your profile. It expires in 30 days.</p>',
 		),
@@ -215,7 +215,7 @@ export const registerSpeaker = async (input: {
 		const created: Speaker = {
 			id: randomId(12),
 			slug,
-			status: 'pending',
+			status: 'approved',
 			...input.profile,
 			photo,
 			secret: encryptJson({ email: input.email, phone: input.phone, payout: input.payout } satisfies SpeakerSecret),
@@ -234,20 +234,6 @@ export const registerSpeaker = async (input: {
 
 	await sendManageLinkEmail(speaker, { email: input.email, phone: input.phone, payout: input.payout }, input.origin, true);
 
-	const reviewer = adminEmail();
-
-	if (reviewer) {
-		const approvalUrl = link(input.origin, '/admin/approve', signToken({ t: 'approve', sid: speaker.id }, 7 * DAY));
-
-		await sendMail({
-			to: reviewer,
-			subject: `Review speaker profile: ${speaker.name}`,
-			text: `A new speaker profile is awaiting review.\n\nName: ${speaker.name}\nCategory: ${speaker.category}\n\nReview and approve it:\n${approvalUrl}`,
-			html: emailLayout('Speaker profile awaiting review',
-				`<p>A new profile from <strong>${escapeHtml(speaker.name)}</strong> is awaiting review.</p>` +
-					emailButton(approvalUrl, 'Review profile')),
-		});
-	}
 
 };
 
@@ -272,7 +258,7 @@ export const approveSpeaker = async (token: string | null): Promise<Speaker | nu
 	const approved = await mutateDb(db => {
 		const speaker = db.speakers.find(item => item.id === payload.sid);
 
-		if (!speaker || speaker.status !== 'pending') {
+		if (!speaker) {
 			return null;
 		}
 
