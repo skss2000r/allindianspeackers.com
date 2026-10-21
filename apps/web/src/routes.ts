@@ -7,6 +7,8 @@ export default [
  route('speakers','routes/speakers.tsx'),
  route('speakers/:slug','routes/speakers.$slug.tsx'),
  route('become-a-speaker','routes/become-a-speaker.tsx'),
+ route('auth/linkedin', 'routes/auth.linkedin.tsx'),
+ route('auth/linkedin/callback', 'routes/auth.linkedin.callback.tsx'),
  route('manage','routes/manage.tsx'),
  route('booking/respond','routes/booking.respond.tsx'),
  route('admin/approve','routes/admin.approve.tsx'),
