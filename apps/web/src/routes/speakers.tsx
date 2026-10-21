@@ -12,7 +12,7 @@ export async function loader() {
 export function meta({ matches, location }: Route.MetaArgs) {
 	return seo({ matches, location }, {
 		title: 'Speakers & celebrities — All Indian Speakers',
-		description: 'Browse approved speakers and celebrities and send a booking request. Profiles are verified before they go live.',
+		description: 'Browse speaker and celebrity profiles by topic, city and fee, then send a booking request.',
 	});
 }
 
@@ -28,11 +28,11 @@ export default function Speakers({ loaderData }: Route.ComponentProps) {
 		<main className="detail">
 			<div className="eyebrow">VERIFIED VOICES</div>
 			<h1>Speakers.</h1>
-			{!loaderData.speakers.length && <p>No approved profiles are live yet. Speakers can <Link to="/become-a-speaker">create a profile</Link>; approved profiles appear here automatically.</p>}
+			{!loaderData.speakers.length && <p>No speaker profiles are live yet. <Link to="/become-a-speaker">Create the first profile</Link> and it will appear here when submitted.</p>}
 			{loaderData.speakers.length > 0 && <div className="form">
 				<label className="field"><span>Search speakers</span><input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Name, topic, or city" /></label>
 				<label className="field"><span>Filter by specialty</span><select value={specialty} onChange={event => setSpecialty(event.target.value)}><option value="all">All specialties</option>{SPEAKER_SPECIALTIES.map(item => <option key={item}>{item}</option>)}</select></label>
-				<p className="hint">Showing {speakers.length} of {loaderData.speakers.length} approved speakers</p>
+				<p className="hint">Showing {speakers.length} of {loaderData.speakers.length} speaker profiles</p>
 			</div>}
 			<div className="grid speakers-grid">
 				{speakers.map(speaker => (
@@ -41,7 +41,7 @@ export default function Speakers({ loaderData }: Route.ComponentProps) {
 						<small>{speaker.category.toUpperCase()}</small>
 						{speaker.specialties.length > 0 && <small>{speaker.specialties.join(' · ')}</small>}
 						<h3>{speaker.name}</h3>
-						<div className="price">{speaker.headline}<span>View profile ↗</span></div>
+						<div className="price">{speaker.headline}<span>{speaker.feeInr != null ? `From ₹${speaker.feeInr.toLocaleString('en-IN')} · ` : ''}View profile ↗</span></div>
 					</Link>
 				))}
 			</div>
