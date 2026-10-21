@@ -27,6 +27,10 @@ export type Speaker = {
 	bio: string;
 	languages: string[];
 	city: string;
+	linkedinUrl: string;
+	instagramUrl: string;
+	youtubeUrl: string;
+	websiteUrl: string;
 	feeInr: number | null;
 	showFee: boolean;
 	/** File name inside DATA_DIR/photos, or null. */
