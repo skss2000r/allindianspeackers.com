@@ -70,6 +70,7 @@ export default function SpeakerProfile({ loaderData }: Route.ComponentProps) {
 			<h1>{speaker.name}</h1>
 			{speaker.photoUrl && <img src={speaker.photoUrl} width="800" height="500" alt={speaker.name} />}
 			<p><strong>{speaker.headline}</strong></p>
+			{speaker.specialties.length > 0 && <p className="hint">Specialties: {speaker.specialties.join(' · ')}</p>}
 			<p style={{ whiteSpace: 'pre-wrap' }}>{speaker.bio}</p>
 			<p>Based in {speaker.city} · Speaks {speaker.languages.join(', ')}</p>
 			{speaker.feeInr != null && <p className="big-price">From ₹{speaker.feeInr.toLocaleString('en-IN')}</p>}

@@ -5,6 +5,21 @@ export const TERMS_VERSION = '2026-10-21';
 export const PAYOUT_BUSINESS_DAYS = 7;
 export const SITE_NAME = 'All Indian Speakers';
 
+export const SPEAKER_SPECIALTIES = [
+	'Motivational Speaking',
+	'Innovation & Technology',
+	'Education & Academia',
+	'Communication & Mentorship',
+	'Leadership & Business',
+	'Entrepreneurship',
+	'Sports & Performance',
+	'Film, TV & Entertainment',
+	'Music & Performing Arts',
+	'Health & Wellness',
+	'Social Impact',
+	'Other',
+] as const;
+
 export const SPEAKER_CATEGORIES = [
 	'Leadership & Business',
 	'Technology & Innovation',

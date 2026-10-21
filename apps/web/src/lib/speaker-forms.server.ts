@@ -11,12 +11,17 @@ export type FormValues = Record<string, string>;
 
 export const echoValues = (form: FormData): FormValues => {
 	const keys = ['name', 'headline', 'category', 'bio', 'languages', 'city', 'feeInr', 'email', 'phone', 'payoutMethod', 'accountName', 'ifsc', 'showFee'];
+	const values = Object.fromEntries(keys.map(key => [key, text(form, key)]));
+	const specialties = form.getAll('specialties').filter((value): value is string => typeof value === 'string');
 
-	return Object.fromEntries(keys.map(key => [key, text(form, key)]));
+	return { ...values, specialties: specialties.join(',') };
 };
 
 export const parseProfile = (form: FormData) => {
-	const result = speakerProfileSchema.safeParse(Object.fromEntries(['name', 'headline', 'category', 'bio', 'languages', 'city', 'feeInr', 'showFee'].map(key => [key, text(form, key)])));
+	const result = speakerProfileSchema.safeParse({
+		...Object.fromEntries(['name', 'headline', 'category', 'bio', 'languages', 'city', 'feeInr', 'showFee'].map(key => [key, text(form, key)])),
+		specialties: form.getAll('specialties').filter((value): value is string => typeof value === 'string'),
+	});
 
 	return result.success
 		? { data: result.data as ProfileInput, errors: {} as Record<string, string> }

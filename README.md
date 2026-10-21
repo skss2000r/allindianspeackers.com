@@ -33,7 +33,7 @@ Set the required environment variables in Hostinger before accepting real submis
 - `ADMIN_EMAIL`: mailbox that receives profile approval and booking copies.
 - `SMTP_HOST`, `SMTP_PORT` (usually 465), `SMTP_USER`, `SMTP_PASS`, and optionally `MAIL_FROM`: required for transactional email.
 
-The root `package-lock.json` is committed; deploy with npm so Hostinger installs the locked workspace dependencies. This repository's GitHub Actions workflow checks the Node build only. Vercel can deploy the SSR site from the `apps/web` root using its React Router preset. Configure `APP_SECRET`, `DATA_DIR`, and `SITE_URL` in Vercel. The app writes its database and photos to local disk; Vercel does not provide durable local storage, so profile registration and bookings need a persistent database and file storage before they should be enabled.
+The root `package-lock.json` is committed; deploy with npm so Hostinger installs the locked workspace dependencies. This repository's GitHub Actions workflow checks the Node build only. Vercel can deploy the SSR site from the `apps/web` root using its React Router preset. The app uses the Neon integration's `POSTGRES_URL` on Vercel for durable profile, booking, and photo storage; for local development and Hostinger it continues to use the JSON database and photos in `DATA_DIR`.
 
 ## Features
 
