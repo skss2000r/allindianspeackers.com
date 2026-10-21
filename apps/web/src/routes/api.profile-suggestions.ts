@@ -10,7 +10,7 @@ type GeminiReply = { candidates?: Array<{ content?: { parts?: Array<{ text?: str
 const allowProfileLookup = createRateLimiter({ maxRequests: 8, windowSeconds: 15 * 60 });
 
 const clean = (value: unknown, max: number): string =>
-	typeof value === 'string' ? value.replace(/[\\u0000-\\u001F\\u007F]/g, ' ').trim().slice(0, max) : '';
+	typeof value === 'string' ? value.replace(/[\u0000-\u001F\u007F]/g, ' ').trim().slice(0, max) : '';
 
 const urlOnHost = (url: string, hosts: string[]): boolean => {
 	try {
