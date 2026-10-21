@@ -157,8 +157,8 @@ export default function BecomeASpeaker({ loaderData }: Route.ComponentProps) {
 			<main className="detail">
 				<div className="eyebrow">THANK YOU</div>
 				<h1>Profile received.</h1>
-				<p>Check your email: we sent you a private link to manage your profile, fee and payout details. If this address was already registered, the same link was re-sent. We review every profile before it goes live, and you will be emailed the moment it is approved.</p>
-				<Link className="action" to="/">Back to the stage ↗</Link>
+				<p>Your profile is now live in the Speakers directory with the photo, topics and public fee you selected. Use the private management link sent to your registered email to update or remove your profile.</p>
+				<Link className="action" to="/speakers">View the Speakers directory ↗</Link>
 			</main>
 		);
 	}
@@ -186,7 +186,7 @@ export default function BecomeASpeaker({ loaderData }: Route.ComponentProps) {
 					<span>I confirm that I am the speaker or an authorized representative, and that I have reviewed the profile details for accuracy.</span>
 				</label>
 				{errors.speakerConfirmation && <small className="error" role="alert">{errors.speakerConfirmation}</small>}
-				<p className="hint">Google and AI suggestions are not identity verification. The profile will be reviewed by the site owner before it appears publicly.</p>
+				<p className="hint">Google and AI suggestions do not verify identity. Your profile is published immediately when you submit it, so make sure the information is accurate and that you are the speaker or authorized representative.</p>
 				<label className="check">
 					<input type="checkbox" name="terms" required />
 					<span>I accept the <Link to="/terms" target="_blank">terms and {COMMISSION_PCT}% commission</Link>.</span>
