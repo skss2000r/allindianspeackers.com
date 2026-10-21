@@ -21,8 +21,8 @@ This is a server-rendered Node.js app; it cannot be deployed as a static GitHub 
 - Root directory: repository root (`./`), so npm installs the monorepo workspace and its root lockfile.
 - Node.js: 22.12+ (22.x or 24.x).
 - Build command: `npm run build`.
-- Output directory: `dist/apps/web`.
-- Server entry file, if requested: `dist/apps/web/server/index.js`.
+- Output directory: `apps/web/build` (React Router's standard build folder). In Vercel, set the project root to `apps/web` and use the React Router preset.
+- Server entry file, if requested: `apps/web/build/server/index.js`.
 - Start command: `npm start`.
 
 Set the required environment variables in Hostinger before accepting real submissions:
@@ -33,7 +33,7 @@ Set the required environment variables in Hostinger before accepting real submis
 - `ADMIN_EMAIL`: mailbox that receives profile approval and booking copies.
 - `SMTP_HOST`, `SMTP_PORT` (usually 465), `SMTP_USER`, `SMTP_PASS`, and optionally `MAIL_FROM`: required for transactional email.
 
-The root `package-lock.json` is committed; deploy with npm so Hostinger installs the locked workspace dependencies. This repository's GitHub Actions workflow checks the Node build only. Hostinger's GitHub integration performs the hosting deployment when configured.
+The root `package-lock.json` is committed; deploy with npm so Hostinger installs the locked workspace dependencies. This repository's GitHub Actions workflow checks the Node build only. Vercel can deploy the SSR site from the `apps/web` root using its React Router preset. Configure `APP_SECRET`, `DATA_DIR`, and `SITE_URL` in Vercel. The app writes its database and photos to local disk; Vercel does not provide durable local storage, so profile registration and bookings need a persistent database and file storage before they should be enabled.
 
 ## Features
 
