@@ -26,7 +26,7 @@ export default function Speakers({ loaderData }: Route.ComponentProps) {
 
 	return (
 		<main className="detail">
-			<div className="eyebrow">VERIFIED VOICES</div>
+			<div className="eyebrow">SPEAKER DIRECTORY</div>
 			<h1>Speakers.</h1>
 			{!loaderData.speakers.length && <p>No speaker profiles are live yet. <Link to="/become-a-speaker">Create the first profile</Link> and it will appear here when submitted.</p>}
 			{loaderData.speakers.length > 0 && <div className="form">
