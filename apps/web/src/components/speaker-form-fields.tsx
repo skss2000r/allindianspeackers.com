@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Field } from '@/components/form-field';
 import { SPEAKER_CATEGORIES, SPEAKER_SPECIALTIES } from '@/lib/config';
 
@@ -12,7 +12,51 @@ export function ProfileFields({ values = {}, errors = {} }: { values?: Values; e
 	const [searchError, setSearchError] = useState('');
 	const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
 	const [searchNotice, setSearchNotice] = useState('');
+	const linkedinPopup = useRef<Window | null>(null);
+	const [linkedinNotice, setLinkedinNotice] = useState('');
 	const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(`${identifier || profileName} speaker`)}`;
+
+	useEffect(() => {
+		const onMessage = (event: MessageEvent) => {
+			if (event.origin !== window.location.origin || event.source !== linkedinPopup.current) return;
+			const message = event.data as { type?: unknown; profile?: unknown; message?: unknown };
+
+			if (message?.type !== 'linkedin-profile-import') return;
+			const profile = message.profile as { name?: unknown; email?: unknown } | null;
+
+			if (profile && typeof profile.name === 'string' && profile.name.trim()) {
+				setProfileName(profile.name.slice(0, 80));
+				const form = document.querySelector('form.form');
+				const emailField = form instanceof HTMLFormElement ? form.elements.namedItem('email') : null;
+
+				if (emailField instanceof HTMLInputElement && typeof profile.email === 'string') {
+					const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+					setter?.call(emailField, profile.email.slice(0, 254));
+					emailField.dispatchEvent(new Event('input', { bubbles: true }));
+					emailField.dispatchEvent(new Event('change', { bubbles: true }));
+				}
+
+				setLinkedinNotice('LinkedIn name and email imported. Review them before submitting; this does not verify your identity.');
+			} else {
+				setLinkedinNotice(typeof message.message === 'string' ? message.message : 'LinkedIn profile details could not be imported.');
+			}
+		};
+
+		window.addEventListener('message', onMessage);
+		return () => window.removeEventListener('message', onMessage);
+	}, []);
+
+	const connectLinkedIn = () => {
+		const popup = window.open('/auth/linkedin', 'linkedin-profile-import', 'popup,width=600,height=700');
+
+		if (!popup) {
+			setLinkedinNotice('Allow this pop-up to connect your LinkedIn account.');
+			return;
+		}
+
+		linkedinPopup.current = popup;
+		setLinkedinNotice('Complete LinkedIn sign-in in the pop-up window.');
+	};
 
 	const setFormValue = (name: string, value: string) => {
 		const form = document.querySelector('form.form');
@@ -95,6 +139,8 @@ export function ProfileFields({ values = {}, errors = {} }: { values?: Values; e
 						<button type="button" onClick={() => useSearchResult(result)}>Use this result</button>
 					</article>)}
 				</div>}
+				<button type="button" onClick={connectLinkedIn}>Fill name and email from LinkedIn ↗</button>
+				{linkedinNotice && <p className="hint" role="status">{linkedinNotice}</p>}
 				<a className="hint" href={googleSearchUrl} target="_blank" rel="noreferrer">Open this search in Google ↗</a>
 			</fieldset>
 			<Field label="Full / stage name" error={errors.name}>
