@@ -24,7 +24,7 @@ const timingSafeStringEqual = (left: string, right: string): boolean => {
 
 export async function loader({ request }: Route.LoaderArgs) {
 	const url = new URL(request.url);
-	const secure = url.protocol === 'https:';
+	const secure = siteOrigin(request).startsWith('https:');
 	const providerError = url.searchParams.get('error');
 	if (providerError) return returnToForm('cancelled', secure);
 
