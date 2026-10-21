@@ -4,6 +4,7 @@ import { SPEAKER_CATEGORIES, SPEAKER_SPECIALTIES } from '@/lib/config';
 
 type Values = Record<string, string | undefined>;
 type SearchResult = { title: string; snippet: string; url: string; displayLink: string };
+type ProfileSuggestion = { name: string; headline: string; bio: string; category: string; specialties: string[]; languages: string[]; city: string; linkedinUrl: string; instagramUrl: string; youtubeUrl: string; websiteUrl: string };
 
 export function ProfileFields({ values = {}, errors = {} }: { values?: Values; errors?: Record<string, string> }) {
 	const [profileName, setProfileName] = useState(values.name ?? '');
@@ -11,6 +12,7 @@ export function ProfileFields({ values = {}, errors = {} }: { values?: Values; e
 	const [searchBusy, setSearchBusy] = useState(false);
 	const [searchError, setSearchError] = useState('');
 	const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+	const [searchSuggestions, setSearchSuggestions] = useState<ProfileSuggestion | null>(null);
 	const [searchNotice, setSearchNotice] = useState('');
 	const linkedinPopup = useRef<Window | null>(null);
 	const [linkedinNotice, setLinkedinNotice] = useState('');
@@ -82,6 +84,7 @@ export function ProfileFields({ values = {}, errors = {} }: { values?: Values; e
 		setSearchError('');
 		setSearchNotice('');
 		setSearchResults([]);
+		setSearchSuggestions(null);
 
 		try {
 			const response = await fetch('/api/profile-suggestions', {
@@ -89,13 +92,18 @@ export function ProfileFields({ values = {}, errors = {} }: { values?: Values; e
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ identifier: query }),
 			});
-			const payload = await response.json() as { results?: SearchResult[]; error?: string };
+			const payload = await response.json() as { results?: SearchResult[]; suggestions?: ProfileSuggestion | null; aiAvailable?: boolean; error?: string };
 
 			if (!response.ok) {
 				throw new Error(payload.error || 'Profile search is unavailable right now.');
 			}
 
 			setSearchResults(payload.results ?? []);
+			setSearchSuggestions(payload.suggestions ?? null);
+
+			if (payload.results?.length && !payload.aiAvailable) {
+				setSearchNotice('Google found public results, but AI suggestions are not configured. Review a result or complete the fields yourself.');
+			}
 
 			if (!payload.results?.length) {
 				setSearchNotice('Google did not return matching public results. Check the link or handle and try again.');
@@ -105,6 +113,38 @@ export function ProfileFields({ values = {}, errors = {} }: { values?: Values; e
 		} finally {
 			setSearchBusy(false);
 		}
+	};
+
+	const applySuggestions = () => {
+		if (!searchSuggestions) return;
+		const suggestion = searchSuggestions;
+
+		if (suggestion.name) setProfileName(suggestion.name);
+		for (const [name, value] of Object.entries({
+			headline: suggestion.headline,
+			bio: suggestion.bio,
+			category: suggestion.category,
+			languages: suggestion.languages.join(', '),
+			city: suggestion.city,
+			linkedinUrl: suggestion.linkedinUrl,
+			instagramUrl: suggestion.instagramUrl,
+			youtubeUrl: suggestion.youtubeUrl,
+			websiteUrl: suggestion.websiteUrl,
+		})) {
+			if (value) setFormValue(name, value);
+		}
+
+		const form = document.querySelector('form.form');
+		form?.querySelectorAll<HTMLInputElement>('input[name="specialties"]').forEach(input => {
+			const checked = suggestion.specialties.includes(input.value);
+			if (input.checked !== checked) {
+				input.checked = checked;
+				input.dispatchEvent(new Event('input', { bubbles: true }));
+				input.dispatchEvent(new Event('change', { bubbles: true }));
+			}
+		});
+
+		setSearchNotice('AI suggestions applied. Check every field and the Google sources before submitting.');
 	};
 
 	const useSearchResult = (result: SearchResult) => {
@@ -123,16 +163,21 @@ export function ProfileFields({ values = {}, errors = {} }: { values?: Values; e
 		<>
 			<fieldset className="panel">
 				<legend>Find your public profile</legend>
-				<p className="hint">Enter one social profile link or @handle. We’ll search Google for public results you can review.</p>
+				<p className="hint">Enter one social profile link or @handle. Google will find public results; AI can draft editable profile fields from those results.</p>
 				<Field label="Social profile URL or @handle">
 					<input value={identifier} onChange={event => setIdentifier(event.target.value)} maxLength={300} placeholder="https://linkedin.com/in/... or @yourname" autoComplete="url" />
 				</Field>
 				<button type="button" className="action" disabled={searchBusy} onClick={searchProfile}>{searchBusy ? 'Searching…' : 'Search public profiles ↗'}</button>
 				{searchError && <small className="error" role="alert">{searchError}</small>}
 				{searchNotice && <p className="hint" role="status">{searchNotice}</p>}
+				{searchSuggestions && <div className="panel" aria-label="AI profile suggestions">
+					<h3>AI profile draft</h3>
+					<p className="hint">Suggestions are based on Google result snippets. They can be wrong; check each field and review the source links below.</p>
+					<button type="button" onClick={applySuggestions}>Apply AI suggestions</button>
+				</div>}
 				{searchResults.length > 0 && <div className="panel" aria-label="Google search suggestions">
 					<p className="hint">Review each result carefully. Search matches can refer to someone else.</p>
-					{searchResults.map((result, index) => <article key={result.url} className="cart-row">
+					{searchResults.map((result) => <article key={result.url} className="cart-row">
 						<h3><a href={result.url} target="_blank" rel="noreferrer">{result.title} ↗</a></h3>
 						<p className="hint">{result.displayLink}</p>
 						<p>{result.snippet}</p>
