@@ -465,7 +465,7 @@ export type BookingInput = {
 
 const inr = (value: number | null) => (value == null ? 'Not specified' : `₹${value.toLocaleString('en-IN')}`);
 
-export const createBooking = async (slug: string, input: BookingInput, origin: string): Promise<boolean> => {
+export const createBooking = async (slug: string, input: BookingInput, origin: string): Promise<{ speakerNotified: boolean; clientNotified: boolean } | null> => {
 	// Profiles exposed in the public directory/profile are bookable, including legacy records.
 	const speaker = (await readDb()).speakers.find(item => item.slug === slug);
 
@@ -494,7 +494,7 @@ export const createBooking = async (slug: string, input: BookingInput, origin: s
 		`Event: ${event.eventType}\nDate: ${event.eventDate}\nCity: ${event.eventCity}\nBudget: ${inr(event.budgetInr)}\n\nMessage:\n${event.message}`;
 
 	// Notify the speaker (no client contact details until they accept).
-	await sendMail({
+	const speakerNotified = await sendMail({
 		to: secret.email,
 		subject: `New booking request: ${event.eventType} on ${event.eventDate}`,
 		text: `You have a new booking request on ${SITE_NAME}.\n\n${details}\n\nAccept or decline:\n${respond}\n\nClient contact details are shared once you accept.`,
@@ -508,7 +508,7 @@ export const createBooking = async (slug: string, input: BookingInput, origin: s
 	});
 
 	// Acknowledge to the client.
-	await sendMail({
+	const clientNotified = await sendMail({
 		to: clientEmail,
 		subject: `We received your request for ${speaker.name}`,
 		text: `Hi ${clientName},\n\nYour booking request for ${speaker.name} has been sent. You will get an email as soon as they respond.\n\n${details}`,
@@ -529,7 +529,7 @@ export const createBooking = async (slug: string, input: BookingInput, origin: s
 		});
 	}
 
-	return true;
+	return { speakerNotified, clientNotified };
 };
 
 export type RespondView = {
