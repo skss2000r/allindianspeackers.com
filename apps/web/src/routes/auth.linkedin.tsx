@@ -22,7 +22,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 	authorize.searchParams.set('state', state);
 	authorize.searchParams.set('scope', 'openid profile email');
 
-	const secure = new URL(request.url).protocol === 'https:' ? '; Secure' : '';
+	const secure = siteOrigin(request).startsWith('https:') ? '; Secure' : '';
 
 	return redirect(authorize.toString(), {
 		headers: {
