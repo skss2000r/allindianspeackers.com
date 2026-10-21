@@ -131,7 +131,7 @@ export default function Manage({ loaderData }: Route.ComponentProps) {
 	}
 
 	const p = view.profile;
-	const profile = { name: p.name, headline: p.headline, category: p.category, bio: p.bio, city: p.city, languages: p.languages.join(', '), feeInr: p.feeInr == null ? '' : String(p.feeInr), showFee: p.showFee ? 'on' : '' };
+	const profile = { name: p.name, headline: p.headline, category: p.category, specialties: p.specialties.join(','), bio: p.bio, city: p.city, languages: p.languages.join(', '), feeInr: p.feeInr == null ? '' : String(p.feeInr), showFee: p.showFee ? 'on' : '' };
 	const current = Object.keys(values).length ? { ...profile, ...values } : profile;
 
 	return (
