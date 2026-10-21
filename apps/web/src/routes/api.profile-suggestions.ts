@@ -27,7 +27,7 @@ const getAiSuggestions = async (identifier: string, results: SearchResult[]) => 
 
 	const allowedCategories = SPEAKER_CATEGORIES;
 	const allowedSpecialties = SPEAKER_SPECIALTIES;
-	const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+	const model = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
 	const evidence = results.map(({ title, snippet, displayLink, link }) => ({ title, snippet, source: displayLink, url: link }));
 	const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
 
@@ -124,7 +124,7 @@ export const action = withApi(async ({ request }) => {
 			linkedinUrl: urlOnHost(directUrl, ['linkedin.com']) ? directUrl : resultFor(results, ['linkedin.com']),
 			instagramUrl: urlOnHost(directUrl, ['instagram.com']) ? directUrl : resultFor(results, ['instagram.com']),
 			youtubeUrl: urlOnHost(directUrl, ['youtube.com', 'youtu.be']) ? directUrl : resultFor(results, ['youtube.com', 'youtu.be']),
-			websiteUrl: directUrl && !urlOnHost(directUrl, ['linkedin.com', 'instagram.com', 'youtube.com', 'youtu.be', 'facebook.com', 'x.com', 'twitter.com']) ? directUrl : '',
+			websiteUrl: directUrl && !urlOnHost(directUrl, ['linkedin.com', 'instagram.com', 'youtube.com', 'youtu.be']) ? directUrl : '',
 		} : null;
 
 		return { results: results.map(({ title, link, snippet, displayLink }) => ({ title, url: link, snippet, displayLink })), suggestions: enriched, aiAvailable: Boolean(enriched) };
