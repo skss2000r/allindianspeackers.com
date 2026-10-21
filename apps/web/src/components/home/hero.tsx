@@ -11,6 +11,7 @@ export function Hero() {
 				<p>{t('hero_p1')}<br />{t('hero_p2')}</p>
 				<a className="action" href="/speakers">{t('hero_cta')}</a>
 			</div>
+			<div className="hero-art" aria-hidden="true"><span className="hero-ribbon hero-ribbon-one" /><span className="hero-ribbon hero-ribbon-two" /><span className="hero-art-glow" /></div>
 			<div className="orbit" aria-hidden="true">AIS</div>
 		</section>
 	);
