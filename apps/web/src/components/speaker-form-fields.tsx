@@ -142,7 +142,7 @@ export function ProfileFields({
 
 	const useSearchResult = (result: SearchResult) => {
 		setProfileName(result.title.slice(0, 80));
-		const hostname = new URL(result.url).hostname.replace(/^www\\./, '');
+		const hostname = new URL(result.url).hostname.replace(/^www\./, '');
 		const field = hostname.includes('linkedin.com') ? 'linkedinUrl'
 			: hostname.includes('instagram.com') ? 'instagramUrl'
 				: hostname.includes('youtube.com') || hostname.includes('youtu.be') ? 'youtubeUrl'
