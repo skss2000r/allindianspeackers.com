@@ -7,12 +7,10 @@
  *  - A client never sees the speaker's contact or payout details.
  *  - New profiles stay hidden until the site owner approves them (stops impersonation).
  */
-import { promises as fs } from 'node:fs';
-import path from 'node:path';
+import { deletePhotoData, getPhotoData, putPhotoData, type Booking, type Speaker, mutateDb, readDb } from '@/lib/store.server';
 import { COMMISSION_PCT, SITE_NAME, TERMS_VERSION } from '@/lib/config';
 import { emailButton, emailLayout, sendMail } from '@/lib/mailer.server';
 import { blindIndex, decryptJson, encryptJson, escapeHtml, randomId, signToken, verifyToken } from '@/lib/security.server';
-import { type Booking, type Speaker, mutateDb, photosDir, readDb } from '@/lib/store.server';
 import type { PayoutDetails } from '@/lib/validation';
 
 const DAY = 86_400;
@@ -153,13 +151,13 @@ const savePhoto = async (file: File): Promise<string> => {
 
 	const name = `${randomId(16)}.${isJpeg ? 'jpg' : 'png'}`;
 
-	await fs.mkdir(photosDir(), { recursive: true, mode: 0o700 });
-	await fs.writeFile(path.join(photosDir(), name), isJpeg ? stripJpegMetadata(buf) : stripPngMetadata(buf), { mode: 0o600 });
+	const cleanImage = isJpeg ? stripJpegMetadata(buf) : stripPngMetadata(buf);
+	await putPhotoData(name, cleanImage.toString('base64'));
 
 	return name;
 };
 
-const removePhoto = (name: string | null) => (name ? fs.rm(path.join(photosDir(), name), { force: true }) : Promise.resolve());
+const removePhoto = (name: string | null) => (name ? deletePhotoData(name) : Promise.resolve());
 
 export const readPhoto = async (name: string): Promise<{ data: Buffer; type: string } | null> => {
 	if (!/^[A-Za-z0-9_-]{16,40}\.(jpg|png)$/.test(name)) {
@@ -172,11 +170,9 @@ export const readPhoto = async (name: string): Promise<{ data: Buffer; type: str
 		return null;
 	}
 
-	try {
-		return { data: await fs.readFile(path.join(photosDir(), name)), type: name.endsWith('.png') ? 'image/png' : 'image/jpeg' };
-	} catch {
-		return null;
-	}
+	const data = await getPhotoData(name);
+
+	return data ? { data, type: name.endsWith('.png') ? 'image/png' : 'image/jpeg' } : null;
 };
 
 /* ------------------------------------------------------------ onboarding */
