@@ -187,10 +187,11 @@ export function ProfileFields({
 				{linkedinNotice && <p className="hint" role="status">{linkedinNotice}</p>}
 				<a className="hint" href={googleSearchUrl} target="_blank" rel="noreferrer">Open this search in Google ↗</a>
 			</fieldset>
+			<input type="hidden" name="socialIdentifier" value={identifier} />
 			<Field label="Full / stage name" error={errors.name}>
-				<input name="name" required minLength={2} maxLength={80} value={profileName} onChange={event => setProfileName(event.target.value)} autoComplete="name" />
+				<input name="name" maxLength={80} value={profileName} onChange={event => setProfileName(event.target.value)} autoComplete="name" />
 				{profileName.trim().length > 1 && <a className="hint" href={googleSearchUrl} target="_blank" rel="noreferrer">Search Google for this speaker ↗</a>}
-				<p className="hint">Check the speaker name and details before submitting.</p>
+				<p className="hint">You can leave this blank if you enter a social profile above. We’ll use the name found in search, or the @handle if no name is found.</p>
 			</Field>
 			<Field label="One-line headline" error={errors.headline} hint="e.g. Olympic medallist & motivational speaker">
 				<input name="headline" maxLength={120} defaultValue={values.headline} />
