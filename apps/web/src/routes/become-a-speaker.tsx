@@ -10,6 +10,7 @@ import { assertSameOrigin, trustedOrigin } from '@/lib/security.server';
 import { echoValues, parseContact, parsePayout, parseProfile, photoFrom } from '@/lib/speaker-forms.server';
 import { registerSpeaker } from '@/lib/speakers.server';
 import { decryptJson } from '@/lib/security.server';
+import { siteOrigin } from '@/lib/site-origin.server';
 
 export function meta({ matches, location }: Route.MetaArgs) {
 	return seo({ matches, location }, {
@@ -37,7 +38,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 		}
 	}
 
-	const secure = new URL(request.url).hostname !== 'localhost';
+	const secure = siteOrigin(request).startsWith('https:');
 	const clearCookie = `linkedin_profile_import=; HttpOnly; SameSite=Lax; Path=/become-a-speaker; Max-Age=0${secure ? '; Secure' : ''}`;
 	const error = new URL(request.url).searchParams.get('linkedinError');
 	const linkedinMessage = error === 'not_configured' ? 'LinkedIn import needs app credentials configured.'
