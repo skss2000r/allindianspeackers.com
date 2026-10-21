@@ -92,6 +92,10 @@ export async function action({ request }: Route.ActionArgs) {
 		errors.terms = 'You must accept the terms and commission to continue';
 	}
 
+	if (form.get('speakerConfirmation') !== 'on') {
+		errors.speakerConfirmation = 'Confirm that you are the speaker or authorized representative and that the submitted details are accurate';
+	}
+
 	if (!profile.data || !contact.data || !payout.data || Object.keys(errors).length) {
 		return data({ errors, values }, { status: 400 });
 	}
@@ -150,6 +154,12 @@ export default function BecomeASpeaker() {
 					<Field label="Phone / WhatsApp" error={errors.phone}><input type="tel" name="phone" required maxLength={20} defaultValue={values.phone} autoComplete="tel" /></Field>
 				</fieldset>
 				<PayoutFields values={values} errors={errors} />
+				<label className="check">
+					<input type="checkbox" name="speakerConfirmation" required />
+					<span>I confirm that I am the speaker or an authorized representative, and that I have reviewed the profile details for accuracy.</span>
+				</label>
+				{errors.speakerConfirmation && <small className="error" role="alert">{errors.speakerConfirmation}</small>}
+				<p className="hint">Google and AI suggestions are not identity verification. The profile will be reviewed by the site owner before it appears publicly.</p>
 				<label className="check">
 					<input type="checkbox" name="terms" required />
 					<span>I accept the <Link to="/terms" target="_blank">terms and {COMMISSION_PCT}% commission</Link>.</span>
