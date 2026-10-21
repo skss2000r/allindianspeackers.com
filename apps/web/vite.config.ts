@@ -50,6 +50,9 @@ export default defineConfig({
 			allow: [__dirname, path.join(monorepoRoot, 'node_modules')],
 		},
 	},
+	ssr: {
+		noExternal: ['sanitize-html', 'htmlparser2', 'escape-string-regexp'],
+	},
 	preview: {
 		port: 3000,
 		host: '::',

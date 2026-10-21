@@ -1,6 +1,7 @@
 import { Form, Link, data, useActionData, useNavigation } from 'react-router';
 import type { Route } from './+types/speakers.$slug';
 import { Field } from '@/components/form-field';
+import { readFormData } from '@/lib/api.server';
 import { allowBooking, TOO_MANY } from '@/lib/limits.server';
 import { seo } from '@/lib/seo';
 import { assertSameOrigin, trustedOrigin } from '@/lib/security.server';
@@ -34,7 +35,17 @@ export async function action({ request, params }: Route.ActionArgs) {
 		return data({ errors: { form: TOO_MANY } }, { status: 429 });
 	}
 
-	const form = await request.formData();
+	let form: FormData;
+
+	try {
+		form = await readFormData(request, 32 * 1024);
+	} catch (error) {
+		if (error instanceof Response) {
+			return data({ errors: { form: 'Your request is too large. Please shorten the message and try again.' } }, { status: 413 });
+		}
+
+		throw error;
+	}
 
 	if (form.get('website')) {
 		return { sent: true as const };
@@ -53,7 +64,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 		throw new Response('Speaker not found', { status: 404 });
 	}
 
-	return { sent: true as const };
+	return { sent: true as const, ...created };
 }
 
 export default function SpeakerProfile({ loaderData }: Route.ComponentProps) {
@@ -78,7 +89,9 @@ export default function SpeakerProfile({ loaderData }: Route.ComponentProps) {
 
 			<h2>Request a booking</h2>
 			{result && 'sent' in result ? (
-				<p role="status">Request sent. {speaker.name} has been notified and you will receive an email as soon as they respond.</p>
+				<p role="status">{result.speakerNotified
+					? `Your request was sent and ${speaker.name} has been notified.${result.clientNotified ? ' A confirmation email was sent to you.' : ' We could not send your confirmation email.'}`
+					: 'Your request was saved, but we could not notify the speaker by email. Please contact the site team so they can relay it; do not submit the request again.'}</p>
 			) : (
 				<Form method="post" className="form">
 					{errors.form && <p className="error" role="alert">{errors.form}</p>}

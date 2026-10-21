@@ -76,10 +76,10 @@ const sendManageLinkEmail = async (speaker: Speaker, secret: SpeakerSecret, orig
 	await sendMail({
 		to: secret.email,
 		subject: isNew ? `Your ${SITE_NAME} profile is received` : `Your ${SITE_NAME} private profile link`,
-		text: `${isNew ? 'Your profile is now public in the speaker directory.\n\n' : ''}Manage your profile, fee and payout details (private link, do not share):\n${url}\n\nThe link expires in 30 days.`,
+		text: `${isNew ? 'Your profile is now live in the speaker directory.\n\n' : ''}Manage your profile, fee and payout details (private link, do not share):\n${url}\n\nThe link expires in 30 days.`,
 		html: emailLayout(
 			isNew ? 'Profile received' : 'Your private profile link',
-			`<p>${isNew ? 'Thank you for registering. We review every profile before it goes live.' : 'Use the button below to manage your profile.'}</p>` +
+			`<p>${isNew ? 'Thank you for registering. Your profile is now live in the speaker directory.' : 'Use the button below to manage your profile.'}</p>` +
 				emailButton(url, 'Manage my profile') +
 				'<p style="font-size:13px;color:#666">This link is private - anyone who has it can edit your profile. It expires in 30 days.</p>',
 		),
@@ -234,6 +234,7 @@ export const registerSpeaker = async (input: {
 
 	await sendManageLinkEmail(speaker, { email: input.email, phone: input.phone, payout: input.payout }, input.origin, true);
 
+
 };
 
 export const requestManageLink = async (email: string, origin: string): Promise<void> => {
@@ -287,6 +288,8 @@ export const listPublicSpeakers = async (): Promise<PublicSpeaker[]> =>
 	(await readDb()).speakers.map(toPublic);
 
 export const getPublicSpeaker = async (slug: string): Promise<PublicSpeaker | null> => {
+	// Public directory/profile pages include legacy profiles regardless of their old approval state.
+	// A speaker who is publicly visible must remain bookable.
 	const speaker = (await readDb()).speakers.find(item => item.slug === slug);
 
 	return speaker ? toPublic(speaker) : null;
@@ -462,8 +465,9 @@ export type BookingInput = {
 
 const inr = (value: number | null) => (value == null ? 'Not specified' : `₹${value.toLocaleString('en-IN')}`);
 
-export const createBooking = async (slug: string, input: BookingInput, origin: string): Promise<boolean> => {
-	const speaker = (await readDb()).speakers.find(item => item.slug === slug && item.status === 'approved');
+export const createBooking = async (slug: string, input: BookingInput, origin: string): Promise<{ speakerNotified: boolean; clientNotified: boolean } | null> => {
+	// Profiles exposed in the public directory/profile are bookable, including legacy records.
+	const speaker = (await readDb()).speakers.find(item => item.slug === slug);
 
 	if (!speaker) {
 		return false;
@@ -490,7 +494,7 @@ export const createBooking = async (slug: string, input: BookingInput, origin: s
 		`Event: ${event.eventType}\nDate: ${event.eventDate}\nCity: ${event.eventCity}\nBudget: ${inr(event.budgetInr)}\n\nMessage:\n${event.message}`;
 
 	// Notify the speaker (no client contact details until they accept).
-	await sendMail({
+	const speakerNotified = await sendMail({
 		to: secret.email,
 		subject: `New booking request: ${event.eventType} on ${event.eventDate}`,
 		text: `You have a new booking request on ${SITE_NAME}.\n\n${details}\n\nAccept or decline:\n${respond}\n\nClient contact details are shared once you accept.`,
@@ -504,7 +508,7 @@ export const createBooking = async (slug: string, input: BookingInput, origin: s
 	});
 
 	// Acknowledge to the client.
-	await sendMail({
+	const clientNotified = await sendMail({
 		to: clientEmail,
 		subject: `We received your request for ${speaker.name}`,
 		text: `Hi ${clientName},\n\nYour booking request for ${speaker.name} has been sent. You will get an email as soon as they respond.\n\n${details}`,
@@ -525,7 +529,7 @@ export const createBooking = async (slug: string, input: BookingInput, origin: s
 		});
 	}
 
-	return true;
+	return { speakerNotified, clientNotified };
 };
 
 export type RespondView = {

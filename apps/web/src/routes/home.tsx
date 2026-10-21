@@ -1,9 +1,10 @@
 import type {Route} from './+types/home';
 import {seo} from '@/lib/seo';
 import {getProducts} from '@/api/ecommerce-api';
+import {listPublicSpeakers} from '@/lib/speakers.server';
 import {Hero} from '@/components/home/hero';
 import {Sessions} from '@/components/home/sessions';
 import {JoinSpeaker} from '@/components/home/join-speaker';
-export async function loader(){return getProducts({exclude_types:'subscription',limit:100});}
+export async function loader(){const [catalog,speakers]=await Promise.all([getProducts({exclude_types:'subscription',limit:100}),listPublicSpeakers()]);return {...catalog,speakers};}
 export function meta({matches,location}:Route.MetaArgs){return seo({matches,location},{title:'Find your favourite voice — All Indian Speakers',description:'Find speakers across leadership, innovation, sports, education and more. Discover your favourite voice for your next event.',jsonLd:[{'@context':'https://schema.org','@type':'WebSite',name:'All Indian Speakers'},{'@context':'https://schema.org','@type':'Organization',name:'All Indian Speakers'}]});}
-export default function Home({loaderData}:Route.ComponentProps){return <main><Hero/><JoinSpeaker/><Sessions products={loaderData.products}/></main>}
+export default function Home({loaderData}:Route.ComponentProps){return <main><Hero/><JoinSpeaker/>{loaderData.speakers.length>0&&<section id="speaker-band" className="sessions"><div className="eyebrow">SPEAKERS</div><h2>Voices for your next event.</h2><div className="grid">{loaderData.speakers.map((speaker,i)=><a className="session" href={'/speakers/'+encodeURIComponent(speaker.slug)} key={speaker.slug}>{speaker.photoUrl?<img src={speaker.photoUrl} alt={speaker.name} width="640" height="480" loading="lazy"/>:<div className="graphic">0{i+1} ↗</div>}<small>{speaker.category.toUpperCase()}</small><h3>{speaker.name}</h3><div className="price">{speaker.headline}<span>{speaker.feeInr!=null?'From ₹'+speaker.feeInr.toLocaleString('en-IN')+' · ':''}View profile ↗</span></div></a>)}</div><a className="action" href="/speakers">Browse all speakers ↗</a></section>}<Sessions products={loaderData.products}/></main>}

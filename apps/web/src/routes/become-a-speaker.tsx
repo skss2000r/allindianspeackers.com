@@ -157,7 +157,7 @@ export default function BecomeASpeaker({ loaderData }: Route.ComponentProps) {
 			<main className="detail">
 				<div className="eyebrow">THANK YOU</div>
 				<h1>Profile received.</h1>
-				<p>Your profile is now live in the Speakers directory with the photo, topics and public fee you selected. To update or remove it, visit Manage profile and request a private link using your registered email.</p>
+				<p>Your profile is now live in the Speakers directory and on the homepage. To update or remove it, request a private link using your registered email.</p>
 				<Link className="action" to="/speakers">View the Speakers directory ↗</Link>
 			</main>
 		);
@@ -186,7 +186,7 @@ export default function BecomeASpeaker({ loaderData }: Route.ComponentProps) {
 					<span>I confirm that I am the speaker or an authorized representative, and that I have reviewed the profile details for accuracy.</span>
 				</label>
 				{errors.speakerConfirmation && <small className="error" role="alert">{errors.speakerConfirmation}</small>}
-				<p className="hint">Google and AI suggestions do not verify identity. Your profile is published immediately when you submit it, so make sure the information is accurate and that you are the speaker or authorized representative.</p>
+				<p className="hint">Google and AI suggestions do not verify identity. Your profile appears publicly as soon as you submit it, so make sure the information is accurate and that you are the speaker or authorized representative.</p>
 				<label className="check">
 					<input type="checkbox" name="terms" required />
 					<span>I accept the <Link to="/terms" target="_blank">terms and {COMMISSION_PCT}% commission</Link>.</span>
