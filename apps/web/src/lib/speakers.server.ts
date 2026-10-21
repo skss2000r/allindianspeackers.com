@@ -26,11 +26,15 @@ export type ProfileInput = {
 	bio: string;
 	languages: string[];
 	city: string;
+	linkedinUrl: string;
+	instagramUrl: string;
+	youtubeUrl: string;
+	websiteUrl: string;
 	feeInr: number | null;
 	showFee: boolean;
 };
 
-export type PublicSpeaker = Pick<Speaker, 'slug' | 'name' | 'headline' | 'category' | 'specialties' | 'bio' | 'languages' | 'city'> & {
+export type PublicSpeaker = Pick<Speaker, 'slug' | 'name' | 'headline' | 'category' | 'specialties' | 'bio' | 'languages' | 'city' | 'linkedinUrl' | 'instagramUrl' | 'youtubeUrl' | 'websiteUrl'> & {
 	photoUrl: string | null;
 	feeInr: number | null;
 };
@@ -44,6 +48,10 @@ const toPublic = (speaker: Speaker): PublicSpeaker => ({
 	bio: speaker.bio,
 	languages: speaker.languages,
 	city: speaker.city,
+	linkedinUrl: speaker.linkedinUrl ?? '',
+	instagramUrl: speaker.instagramUrl ?? '',
+	youtubeUrl: speaker.youtubeUrl ?? '',
+	websiteUrl: speaker.websiteUrl ?? '',
 	photoUrl: speaker.photo ? `/speaker-photo/${speaker.photo}` : null,
 	feeInr: speaker.showFee ? speaker.feeInr : null,
 });
@@ -349,6 +357,10 @@ export const loadManageView = async (token: string | null): Promise<ManageView |
 			bio: speaker.bio,
 			languages: speaker.languages,
 			city: speaker.city,
+			linkedinUrl: speaker.linkedinUrl ?? '',
+			instagramUrl: speaker.instagramUrl ?? '',
+			youtubeUrl: speaker.youtubeUrl ?? '',
+			websiteUrl: speaker.websiteUrl ?? '',
 			feeInr: speaker.feeInr,
 			showFee: speaker.showFee,
 			slug: speaker.slug,

@@ -10,7 +10,7 @@ const text = (form: FormData, key: string): string => {
 export type FormValues = Record<string, string>;
 
 export const echoValues = (form: FormData): FormValues => {
-	const keys = ['name', 'headline', 'category', 'bio', 'languages', 'city', 'feeInr', 'email', 'phone', 'payoutMethod', 'accountName', 'ifsc', 'showFee'];
+	const keys = ['name', 'headline', 'category', 'bio', 'languages', 'city', 'linkedinUrl', 'instagramUrl', 'youtubeUrl', 'websiteUrl', 'feeInr', 'email', 'phone', 'payoutMethod', 'accountName', 'ifsc', 'showFee'];
 	const values = Object.fromEntries(keys.map(key => [key, text(form, key)]));
 	const specialties = form.getAll('specialties').filter((value): value is string => typeof value === 'string');
 
@@ -19,7 +19,7 @@ export const echoValues = (form: FormData): FormValues => {
 
 export const parseProfile = (form: FormData) => {
 	const result = speakerProfileSchema.safeParse({
-		...Object.fromEntries(['name', 'headline', 'category', 'bio', 'languages', 'city', 'feeInr', 'showFee'].map(key => [key, text(form, key)])),
+		...Object.fromEntries(['name', 'headline', 'category', 'bio', 'languages', 'city', 'linkedinUrl', 'instagramUrl', 'youtubeUrl', 'websiteUrl', 'feeInr', 'showFee'].map(key => [key, text(form, key)])),
 		specialties: form.getAll('specialties').filter((value): value is string => typeof value === 'string'),
 	});
 

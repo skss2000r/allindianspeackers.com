@@ -73,6 +73,7 @@ export default function SpeakerProfile({ loaderData }: Route.ComponentProps) {
 			{speaker.specialties.length > 0 && <p className="hint">Specialties: {speaker.specialties.join(' · ')}</p>}
 			<p style={{ whiteSpace: 'pre-wrap' }}>{speaker.bio}</p>
 			<p>Based in {speaker.city} · Speaks {speaker.languages.join(', ')}</p>
+			{(speaker.linkedinUrl || speaker.instagramUrl || speaker.youtubeUrl || speaker.websiteUrl) && <p className="hint">Public links: {[['LinkedIn', speaker.linkedinUrl], ['Instagram', speaker.instagramUrl], ['YouTube', speaker.youtubeUrl], ['Website', speaker.websiteUrl]].filter((item): item is [string, string] => Boolean(item[1])).map(([label, url]) => <a key={label} href={url} target="_blank" rel="noreferrer">{label} ↗ </a>)}</p>}
 			{speaker.feeInr != null && <p className="big-price">From ₹{speaker.feeInr.toLocaleString('en-IN')}</p>}
 
 			<h2>Request a booking</h2>

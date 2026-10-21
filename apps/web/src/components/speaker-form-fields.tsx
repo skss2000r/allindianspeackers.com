@@ -5,10 +5,15 @@ import { SPEAKER_CATEGORIES, SPEAKER_SPECIALTIES } from '@/lib/config';
 type Values = Record<string, string | undefined>;
 
 export function ProfileFields({ values = {}, errors = {} }: { values?: Values; errors?: Record<string, string> }) {
+	const [profileName, setProfileName] = useState(values.name ?? '');
+	const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(`${profileName} speaker LinkedIn`)}`;
+
 	return (
 		<>
 			<Field label="Full / stage name" error={errors.name}>
-				<input name="name" required minLength={2} maxLength={80} defaultValue={values.name} autoComplete="name" />
+				<input name="name" required minLength={2} maxLength={80} value={profileName} onChange={event => setProfileName(event.target.value)} autoComplete="name" />
+				{profileName.trim().length > 1 && <a className="hint" href={googleSearchUrl} target="_blank" rel="noreferrer">Search Google for this speaker ↗</a>}
+				<p className="hint">Search results are suggestions. Confirm they describe you, then copy your public details and profile links into this form.</p>
 			</Field>
 			<Field label="One-line headline" error={errors.headline} hint="e.g. Olympic medallist & motivational speaker">
 				<input name="headline" maxLength={120} defaultValue={values.headline} />
@@ -35,6 +40,14 @@ export function ProfileFields({ values = {}, errors = {} }: { values?: Values; e
 			<Field label="Languages you speak in" error={errors.languages} hint="Comma separated, e.g. English, Hindi, Tamil">
 				<input name="languages" required maxLength={120} defaultValue={values.languages} />
 			</Field>
+			<fieldset className="panel">
+				<legend>Public profile links (optional)</legend>
+				<p className="hint">Add links so organizers can learn more about your work. Paste full https:// links; they will appear on your public profile.</p>
+				<Field label="LinkedIn profile" error={errors.linkedinUrl}><input type="url" name="linkedinUrl" placeholder="https://www.linkedin.com/in/your-name" maxLength={300} defaultValue={values.linkedinUrl} /></Field>
+				<Field label="Instagram profile" error={errors.instagramUrl}><input type="url" name="instagramUrl" placeholder="https://www.instagram.com/your-name" maxLength={300} defaultValue={values.instagramUrl} /></Field>
+				<Field label="YouTube channel" error={errors.youtubeUrl}><input type="url" name="youtubeUrl" placeholder="https://www.youtube.com/@your-channel" maxLength={300} defaultValue={values.youtubeUrl} /></Field>
+				<Field label="Website or other public profile" error={errors.websiteUrl}><input type="url" name="websiteUrl" placeholder="https://example.com" maxLength={300} defaultValue={values.websiteUrl} /></Field>
+			</fieldset>
 			<Field label="Home city" error={errors.city}>
 				<input name="city" required maxLength={60} defaultValue={values.city} autoComplete="address-level2" />
 			</Field>

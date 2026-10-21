@@ -15,6 +15,16 @@ const phone = z
 	.regex(/^[+0-9 ()-]{7,20}$/, 'Enter a valid phone number');
 const email = z.string().trim().toLowerCase().email('Enter a valid email address').max(254);
 
+const optionalHttpsUrl = z.string().trim().max(300, 'Keep this under 300 characters').refine(value => {
+	if (!value) return true;
+	try {
+		const url = new URL(value);
+		return url.protocol === 'https:' && !url.username && !url.password;
+	} catch {
+		return false;
+	}
+}, 'Enter a full secure https:// link').transform(value => value || '');
+
 const optionalFee = z
 	.string()
 	.trim()
@@ -35,6 +45,10 @@ export const speakerProfileSchema = z.object({
 			.slice(0, 8),
 	),
 	city: clean(60, 2),
+	linkedinUrl: optionalHttpsUrl,
+	instagramUrl: optionalHttpsUrl,
+	youtubeUrl: optionalHttpsUrl,
+	websiteUrl: optionalHttpsUrl,
 	feeInr: optionalFee,
 	showFee: z.string().optional().transform(value => value === 'on'),
 });
