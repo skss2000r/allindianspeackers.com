@@ -1,10 +1,13 @@
 import { apiError, readJsonBody, withApi } from '@/lib/api.server';
 import { assertSameOrigin } from '@/lib/security.server';
+import { clientIdentifier, createRateLimiter } from '@/lib/rate-limit.server';
 import { SPEAKER_CATEGORIES, SPEAKER_SPECIALTIES } from '@/lib/config';
 
 type GoogleItem = { title?: unknown; link?: unknown; snippet?: unknown; displayLink?: unknown };
 type SearchResult = { title: string; link: string; snippet: string; displayLink: string };
 type GeminiReply = { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+
+const allowProfileLookup = createRateLimiter({ maxRequests: 8, windowSeconds: 15 * 60 });
 
 const clean = (value: unknown, max: number): string =>
 	typeof value === 'string' ? value.replace(/[\\u0000-\\u001F\\u007F]/g, ' ').trim().slice(0, max) : '';
@@ -82,6 +85,8 @@ export const action = withApi(async ({ request }) => {
 	assertSameOrigin(request);
 
 	if (request.method !== 'POST') return apiError(405, 'Use POST for profile search');
+
+	if (!(await allowProfileLookup(clientIdentifier(request)))) return apiError(429, 'Profile lookup limit reached. Try again later.');
 
 	const body = await readJsonBody<{ identifier?: unknown }>(request);
 	const identifier = typeof body.identifier === 'string' ? body.identifier.trim() : '';
