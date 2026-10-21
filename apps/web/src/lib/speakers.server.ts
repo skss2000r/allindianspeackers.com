@@ -285,7 +285,7 @@ export const approveSpeaker = async (token: string | null): Promise<Speaker | nu
 /* ------------------------------------------------------------- directory */
 
 export const listPublicSpeakers = async (): Promise<PublicSpeaker[]> =>
-	(await readDb()).speakers.filter(speaker => speaker.status === 'approved').map(toPublic);
+	(await readDb()).speakers.map(toPublic);
 
 export const getPublicSpeaker = async (slug: string): Promise<PublicSpeaker | null> => {
 	// Public directory/profile pages include legacy profiles regardless of their old approval state.
@@ -466,7 +466,8 @@ export type BookingInput = {
 const inr = (value: number | null) => (value == null ? 'Not specified' : `₹${value.toLocaleString('en-IN')}`);
 
 export const createBooking = async (slug: string, input: BookingInput, origin: string): Promise<boolean> => {
-	const speaker = (await readDb()).speakers.find(item => item.slug === slug && item.status === 'approved');
+	// Profiles exposed in the public directory/profile are bookable, including legacy records.
+	const speaker = (await readDb()).speakers.find(item => item.slug === slug);
 
 	if (!speaker) {
 		return false;
