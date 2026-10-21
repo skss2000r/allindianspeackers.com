@@ -96,6 +96,11 @@ export function ProfileFields({
 			setSearchResults(payload.results ?? []);
 			setSearchSuggestions(payload.suggestions ?? null);
 
+			if (payload.suggestions) {
+				applySuggestions(payload.suggestions);
+				setSearchNotice('AI suggestions filled in the profile fields. Review and edit every field before submitting.');
+			}
+
 			if (payload.results?.length && !payload.aiAvailable) {
 				setSearchNotice('Google found public results, but AI suggestions are unavailable right now. Review a result or complete the fields yourself.');
 			}
@@ -110,9 +115,8 @@ export function ProfileFields({
 		}
 	};
 
-	const applySuggestions = () => {
-		if (!searchSuggestions) return;
-		const suggestion = searchSuggestions;
+	const applySuggestions = (suggestion: ProfileSuggestion | null) => {
+		if (!suggestion) return;
 
 		if (suggestion.name) setProfileName(suggestion.name);
 		for (const [name, value] of Object.entries({
@@ -168,7 +172,7 @@ export function ProfileFields({
 				{searchSuggestions && <div className="panel" aria-label="AI profile suggestions">
 					<h3>AI profile draft</h3>
 					<p className="hint">Suggestions are based on Google result snippets. They can be wrong; check each field and review the source links below.</p>
-					<button type="button" onClick={applySuggestions}>Apply AI suggestions</button>
+					<button type="button" onClick={() => applySuggestions(searchSuggestions)}>Reapply AI suggestions</button>
 				</div>}
 				{searchResults.length > 0 && <div className="panel" aria-label="Google search suggestions">
 					<p className="hint">Review each result carefully. Search matches can refer to someone else.</p>
