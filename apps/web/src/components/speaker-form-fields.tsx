@@ -3,17 +3,104 @@ import { Field } from '@/components/form-field';
 import { SPEAKER_CATEGORIES, SPEAKER_SPECIALTIES } from '@/lib/config';
 
 type Values = Record<string, string | undefined>;
+type SearchResult = { title: string; snippet: string; url: string; displayLink: string };
 
 export function ProfileFields({ values = {}, errors = {} }: { values?: Values; errors?: Record<string, string> }) {
 	const [profileName, setProfileName] = useState(values.name ?? '');
-	const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(`${profileName} speaker LinkedIn`)}`;
+	const [identifier, setIdentifier] = useState('');
+	const [searchBusy, setSearchBusy] = useState(false);
+	const [searchError, setSearchError] = useState('');
+	const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+	const [searchNotice, setSearchNotice] = useState('');
+	const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(`${identifier || profileName} speaker`)}`;
+
+	const setFormValue = (name: string, value: string) => {
+		const form = document.querySelector('form.form');
+		const field = form instanceof HTMLFormElement ? form.elements.namedItem(name) : null;
+
+		if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement) {
+			const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(field), 'value')?.set;
+			setter?.call(field, value);
+			field.dispatchEvent(new Event('input', { bubbles: true }));
+			field.dispatchEvent(new Event('change', { bubbles: true }));
+		}
+	};
+
+	const searchProfile = async () => {
+		const query = identifier.trim();
+
+		if (query.length < 2) {
+			setSearchError('Enter a social profile URL or @handle first.');
+			return;
+		}
+
+		setSearchBusy(true);
+		setSearchError('');
+		setSearchNotice('');
+		setSearchResults([]);
+
+		try {
+			const response = await fetch('/api/profile-suggestions', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ identifier: query }),
+			});
+			const payload = await response.json() as { results?: SearchResult[]; error?: string };
+
+			if (!response.ok) {
+				throw new Error(payload.error || 'Profile search is unavailable right now.');
+			}
+
+			setSearchResults(payload.results ?? []);
+
+			if (!payload.results?.length) {
+				setSearchNotice('Google did not return matching public results. Check the link or handle and try again.');
+			}
+		} catch (error) {
+			setSearchError(error instanceof Error ? error.message : 'Profile search is unavailable right now.');
+		} finally {
+			setSearchBusy(false);
+		}
+	};
+
+	const useSearchResult = (result: SearchResult) => {
+		setProfileName(result.title.slice(0, 80));
+		const hostname = new URL(result.url).hostname.replace(/^www\\./, '');
+		const field = hostname.includes('linkedin.com') ? 'linkedinUrl'
+			: hostname.includes('instagram.com') ? 'instagramUrl'
+				: hostname.includes('youtube.com') || hostname.includes('youtu.be') ? 'youtubeUrl'
+					: 'websiteUrl';
+		setFormValue(field, result.url);
+		setSearchNotice('Added the selected public link and title. Review these details and complete the rest of your profile.');
+		setSearchResults([]);
+	};
 
 	return (
 		<>
+			<fieldset className="panel">
+				<legend>Find your public profile</legend>
+				<p className="hint">Enter one social profile link or @handle. We’ll search Google for public results you can review.</p>
+				<Field label="Social profile URL or @handle">
+					<input value={identifier} onChange={event => setIdentifier(event.target.value)} maxLength={300} placeholder="https://linkedin.com/in/... or @yourname" autoComplete="url" />
+				</Field>
+				<button type="button" className="action" disabled={searchBusy} onClick={searchProfile}>{searchBusy ? 'Searching…' : 'Search public profiles ↗'}</button>
+				{searchError && <small className="error" role="alert">{searchError}</small>}
+				{searchNotice && <p className="hint" role="status">{searchNotice}</p>}
+				{searchResults.length > 0 && <div className="panel" aria-label="Google search suggestions">
+					<p className="hint">Review each result carefully. Search matches can refer to someone else.</p>
+					{searchResults.map((result, index) => <article key={result.url} className="cart-row">
+						<h3><a href={result.url} target="_blank" rel="noreferrer">{result.title} ↗</a></h3>
+						<p className="hint">{result.displayLink}</p>
+						<p>{result.snippet}</p>
+						<button type="button" onClick={() => useSearchResult(result)}>Use this result</button>
+					</article>)}
+				</div>}
+				<a className="hint" href={googleSearchUrl} target="_blank" rel="noreferrer">Open this search in Google ↗</a>
+			</fieldset>
 			<Field label="Full / stage name" error={errors.name}>
 				<input name="name" required minLength={2} maxLength={80} value={profileName} onChange={event => setProfileName(event.target.value)} autoComplete="name" />
 				{profileName.trim().length > 1 && <a className="hint" href={googleSearchUrl} target="_blank" rel="noreferrer">Search Google for this speaker ↗</a>}
-				<p className="hint">Search results are suggestions. Confirm they describe you, then copy your public details and profile links into this form.</p>
+				<p className="hint">Check the speaker name and details before submitting.</p>
 			</Field>
 			<Field label="One-line headline" error={errors.headline} hint="e.g. Olympic medallist & motivational speaker">
 				<input name="headline" maxLength={120} defaultValue={values.headline} />
