@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { SPEAKER_CATEGORIES } from '@/lib/config';
+import { SPEAKER_CATEGORIES, SPEAKER_SPECIALTIES } from '@/lib/config';
 
 const clean = (max: number, min = 0) =>
 	z
@@ -25,6 +25,7 @@ export const speakerProfileSchema = z.object({
 	name: clean(80, 2),
 	headline: clean(120),
 	category: z.enum(SPEAKER_CATEGORIES),
+	specialties: z.array(z.enum(SPEAKER_SPECIALTIES)).min(1, 'Choose at least one specialty').max(6, 'Choose up to six specialties'),
 	bio: clean(1500, 20),
 	languages: clean(120, 2).transform(value =>
 		value
