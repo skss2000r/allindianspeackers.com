@@ -78,6 +78,33 @@ export async function action({ request }: Route.ActionArgs) {
 		return { done: true as const };
 	}
 
+	const enteredName = String(form.get('name') ?? '').trim();
+	if (!enteredName) {
+		const identifier = String(form.get('socialIdentifier') ?? '').trim();
+		let fallback = identifier;
+
+		try {
+			if (fallback.startsWith('@')) {
+				fallback = fallback.slice(1);
+			} else {
+				const url = new URL(fallback.includes('://') ? fallback : `https://${fallback}`);
+				const segments = url.pathname.split('/').filter(Boolean);
+				const inIndex = segments.findIndex(segment => segment.toLowerCase() === 'in');
+				fallback = inIndex >= 0 ? segments[inIndex + 1] ?? '' : segments.at(-1) ?? '';
+			}
+
+			fallback = decodeURIComponent(fallback);
+		} catch {
+			fallback = '';
+		}
+
+		fallback = fallback.replace(/^[@#]/, '').replace(/[._-]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
+
+		if (fallback.length >= 2) {
+			form.set('name', fallback);
+		}
+	}
+
 	const values = echoValues(form);
 	const profile = parseProfile(form);
 	const contact = parseContact(form, ['email', 'phone']);
