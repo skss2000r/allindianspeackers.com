@@ -1,6 +1,7 @@
 import { Form, Link, data, useActionData, useNavigation } from 'react-router';
 import type { Route } from './+types/speakers.$slug';
 import { Field } from '@/components/form-field';
+import { readFormData } from '@/lib/api.server';
 import { allowBooking, TOO_MANY } from '@/lib/limits.server';
 import { seo } from '@/lib/seo';
 import { assertSameOrigin, trustedOrigin } from '@/lib/security.server';
@@ -34,7 +35,17 @@ export async function action({ request, params }: Route.ActionArgs) {
 		return data({ errors: { form: TOO_MANY } }, { status: 429 });
 	}
 
-	const form = await request.formData();
+	let form: FormData;
+
+	try {
+		form = await readFormData(request, 32 * 1024);
+	} catch (error) {
+		if (error instanceof Response) {
+			return data({ errors: { form: 'Your request is too large. Please shorten the message and try again.' } }, { status: 413 });
+		}
+
+		throw error;
+	}
 
 	if (form.get('website')) {
 		return { sent: true as const };
