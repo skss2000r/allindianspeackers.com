@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Field } from '@/components/form-field';
-import { SPEAKER_CATEGORIES } from '@/lib/config';
+import { SPEAKER_CATEGORIES, SPEAKER_SPECIALTIES } from '@/lib/config';
 
 type Values = Record<string, string | undefined>;
 
@@ -18,6 +18,17 @@ export function ProfileFields({ values = {}, errors = {} }: { values?: Values; e
 					{SPEAKER_CATEGORIES.map(category => <option key={category}>{category}</option>)}
 				</select>
 			</Field>
+			<fieldset className="panel">
+				<legend>What can you speak about? (choose up to six)</legend>
+				<p className="hint">These specialties help organizers find the right speaker.</p>
+				{errors.specialties && <small className="error" role="alert">{errors.specialties}</small>}
+				{SPEAKER_SPECIALTIES.map(specialty => (
+					<label className="check" key={specialty}>
+						<input type="checkbox" name="specialties" value={specialty} defaultChecked={(values.specialties ?? '').split(',').includes(specialty)} />
+						<span>{specialty}</span>
+					</label>
+				))}
+			</fieldset>
 			<Field label="About you (shown publicly)" error={errors.bio}>
 				<textarea name="bio" required minLength={20} maxLength={1500} rows={6} defaultValue={values.bio} />
 			</Field>
