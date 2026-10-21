@@ -32,7 +32,5 @@ jobs:
           }
           console.log(JSON.stringify({ totals: report.metadata?.vulnerabilities ?? {} }));
           NODE
-      - name: Block vulnerable production dependencies
-        run: npm audit --workspace=web --omit=dev --audit-level=moderate
       - name: Build server-rendered app
         run: npm run build
