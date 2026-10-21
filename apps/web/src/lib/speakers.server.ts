@@ -24,6 +24,7 @@ export type ProfileInput = {
 	name: string;
 	headline: string;
 	category: string;
+	specialties: string[];
 	bio: string;
 	languages: string[];
 	city: string;
@@ -31,7 +32,7 @@ export type ProfileInput = {
 	showFee: boolean;
 };
 
-export type PublicSpeaker = Pick<Speaker, 'slug' | 'name' | 'headline' | 'category' | 'bio' | 'languages' | 'city'> & {
+export type PublicSpeaker = Pick<Speaker, 'slug' | 'name' | 'headline' | 'category' | 'specialties' | 'bio' | 'languages' | 'city'> & {
 	photoUrl: string | null;
 	feeInr: number | null;
 };
@@ -41,6 +42,7 @@ const toPublic = (speaker: Speaker): PublicSpeaker => ({
 	name: speaker.name,
 	headline: speaker.headline,
 	category: speaker.category,
+	specialties: speaker.specialties ?? [],
 	bio: speaker.bio,
 	languages: speaker.languages,
 	city: speaker.city,
@@ -347,6 +349,7 @@ export const loadManageView = async (token: string | null): Promise<ManageView |
 			name: speaker.name,
 			headline: speaker.headline,
 			category: speaker.category,
+			specialties: speaker.specialties ?? [],
 			bio: speaker.bio,
 			languages: speaker.languages,
 			city: speaker.city,
