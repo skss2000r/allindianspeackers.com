@@ -6,10 +6,9 @@ import { COMMISSION_PCT } from '@/lib/config';
 import { readFormData } from '@/lib/api.server';
 import { allowRegister, TOO_MANY } from '@/lib/limits.server';
 import { seo } from '@/lib/seo';
-import { assertSameOrigin, trustedOrigin } from '@/lib/security.server';
+import { assertSameOrigin, decryptJson, trustedOrigin } from '@/lib/security.server';
 import { echoValues, parseContact, parsePayout, parseProfile, photoFrom } from '@/lib/speaker-forms.server';
 import { registerSpeaker } from '@/lib/speakers.server';
-import { decryptJson } from '@/lib/security.server';
 import { siteOrigin } from '@/lib/site-origin.server';
 
 export function meta({ matches, location }: Route.MetaArgs) {
@@ -144,7 +143,7 @@ export default function BecomeASpeaker() {
 			<Form method="post" encType="multipart/form-data" className="form" noValidate={false}>
 				{errors.form && <p className="error" role="alert">{errors.form}</p>}
 				<div className="hp" aria-hidden="true"><label>Website<input name="website" tabIndex={-1} autoComplete="off" /></label></div>
-				<ProfileFields values={values} errors={errors} linkedinProfile={loaderData.linkedinProfile} linkedinMessage={loaderData.linkedinMessage} />
+				<ProfileFields values={values} errors={errors} linkedinProfile={loaderData.linkedinProfile} linkedinMessage={loaderData.linkedinMessage} enableLinkedInImport />
 				<fieldset className="panel">
 					<legend>Private contact (never public)</legend>
 					<Field label="Email" error={errors.email}><input type="email" name="email" required maxLength={254} defaultValue={values.email} autoComplete="email" /></Field>
