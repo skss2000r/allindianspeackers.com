@@ -22,6 +22,7 @@ export type Speaker = {
 	name: string;
 	headline: string;
 	category: string;
+	specialties: string[];
 	bio: string;
 	languages: string[];
 	city: string;
