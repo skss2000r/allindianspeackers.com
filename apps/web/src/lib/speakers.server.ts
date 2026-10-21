@@ -470,7 +470,7 @@ export const createBooking = async (slug: string, input: BookingInput, origin: s
 	const speaker = (await readDb()).speakers.find(item => item.slug === slug);
 
 	if (!speaker) {
-		return false;
+		return null;
 	}
 
 	const { clientName, clientEmail, clientPhone, ...event } = input;
