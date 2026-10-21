@@ -157,7 +157,7 @@ export default function BecomeASpeaker({ loaderData }: Route.ComponentProps) {
 			<main className="detail">
 				<div className="eyebrow">THANK YOU</div>
 				<h1>Profile received.</h1>
-				<p>Your profile is now live in the Speakers directory with the photo, topics and public fee you selected. Use the private management link sent to your registered email to update or remove your profile.</p>
+				<p>Your profile is now live in the Speakers directory with the photo, topics and public fee you selected. To update or remove it, visit Manage profile and request a private link using your registered email.</p>
 				<Link className="action" to="/speakers">View the Speakers directory ↗</Link>
 			</main>
 		);
