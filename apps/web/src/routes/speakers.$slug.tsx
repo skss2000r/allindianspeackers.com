@@ -64,7 +64,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 		throw new Response('Speaker not found', { status: 404 });
 	}
 
-	return { sent: true as const };
+	return { sent: true as const, ...created };
 }
 
 export default function SpeakerProfile({ loaderData }: Route.ComponentProps) {
@@ -89,7 +89,9 @@ export default function SpeakerProfile({ loaderData }: Route.ComponentProps) {
 
 			<h2>Request a booking</h2>
 			{result && 'sent' in result ? (
-				<p role="status">Request sent. {speaker.name} has been notified and you will receive an email as soon as they respond.</p>
+				<p role="status">{result.speakerNotified
+					? `Your request was sent and ${speaker.name} has been notified.${result.clientNotified ? ' A confirmation email was sent to you.' : ' We could not send your confirmation email.'}`
+					: 'Your request was saved, but we could not notify the speaker by email. Please contact the site team so they can relay it; do not submit the request again.'}</p>
 			) : (
 				<Form method="post" className="form">
 					{errors.form && <p className="error" role="alert">{errors.form}</p>}
