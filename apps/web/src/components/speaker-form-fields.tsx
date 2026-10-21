@@ -12,11 +12,13 @@ export function ProfileFields({
 	errors = {},
 	linkedinProfile = null,
 	linkedinMessage = '',
+	enableLinkedInImport = false,
 }: {
 	values?: Values;
 	errors?: Record<string, string>;
 	linkedinProfile?: LinkedInProfile | null;
 	linkedinMessage?: string;
+	enableLinkedInImport?: boolean;
 }) {
 	const [profileName, setProfileName] = useState(values.name ?? '');
 	const [identifier, setIdentifier] = useState('');
@@ -177,7 +179,7 @@ export function ProfileFields({
 						<button type="button" onClick={() => useSearchResult(result)}>Use this result</button>
 					</article>)}
 				</div>}
-				<button type="button" onClick={connectLinkedIn}>Import name and email from LinkedIn ↗</button>
+				{enableLinkedInImport && <button type="button" onClick={connectLinkedIn}>Import name and email from LinkedIn ↗</button>}
 				{linkedinNotice && <p className="hint" role="status">{linkedinNotice}</p>}
 				<a className="hint" href={googleSearchUrl} target="_blank" rel="noreferrer">Open this search in Google ↗</a>
 			</fieldset>
