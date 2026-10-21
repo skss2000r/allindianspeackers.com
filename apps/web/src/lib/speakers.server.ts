@@ -288,7 +288,9 @@ export const listPublicSpeakers = async (): Promise<PublicSpeaker[]> =>
 	(await readDb()).speakers.filter(speaker => speaker.status === 'approved').map(toPublic);
 
 export const getPublicSpeaker = async (slug: string): Promise<PublicSpeaker | null> => {
-	const speaker = (await readDb()).speakers.find(item => item.slug === slug && item.status === 'approved');
+	// Public directory/profile pages include legacy profiles regardless of their old approval state.
+	// A speaker who is publicly visible must remain bookable.
+	const speaker = (await readDb()).speakers.find(item => item.slug === slug);
 
 	return speaker ? toPublic(speaker) : null;
 };
