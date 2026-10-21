@@ -9,11 +9,48 @@ import { seo } from '@/lib/seo';
 import { assertSameOrigin, trustedOrigin } from '@/lib/security.server';
 import { echoValues, parseContact, parsePayout, parseProfile, photoFrom } from '@/lib/speaker-forms.server';
 import { registerSpeaker } from '@/lib/speakers.server';
+import { decryptJson } from '@/lib/security.server';
 
 export function meta({ matches, location }: Route.MetaArgs) {
 	return seo({ matches, location }, {
 		title: 'Add your profile — All Indian Speakers',
 		description: 'Speakers and celebrities: create your profile, set your fee, receive booking requests and get paid to your own account.',
+	});
+}
+
+type LinkedInImport = { name: string; email: string };
+
+export async function loader({ request }: Route.LoaderArgs) {
+	const cookie = request.headers.get('cookie') ?? '';
+	const token = cookie.split(';').map(part => part.trim()).find(part => part.startsWith('linkedin_profile_import='))?.slice('linkedin_profile_import='.length) ?? '';
+	let linkedinProfile: LinkedInImport | null = null;
+
+	if (token) {
+		try {
+			const value = decryptJson<unknown>(token);
+			if (value && typeof value === 'object' && 'name' in value && 'email' in value
+				&& typeof value.name === 'string' && typeof value.email === 'string') {
+				linkedinProfile = { name: value.name.slice(0, 80), email: value.email.slice(0, 254) };
+			}
+		} catch {
+			// An invalid or expired import is ignored and immediately cleared.
+		}
+	}
+
+	const secure = new URL(request.url).hostname !== 'localhost';
+	const clearCookie = `linkedin_profile_import=; HttpOnly; SameSite=Lax; Path=/become-a-speaker; Max-Age=0${secure ? '; Secure' : ''}`;
+	const error = new URL(request.url).searchParams.get('linkedinError');
+	const linkedinMessage = error === 'not_configured' ? 'LinkedIn import needs app credentials configured.'
+		: error === 'cancelled' ? 'LinkedIn sign-in was cancelled or declined.'
+			: error ? 'LinkedIn sign-in could not be completed. Please try again.'
+				: linkedinProfile ? 'LinkedIn name and email imported. Review them before submitting; this does not verify your identity.'
+					: '';
+
+	return data({ linkedinProfile, linkedinMessage }, {
+		headers: {
+			'Cache-Control': 'no-store, max-age=0',
+			'Set-Cookie': clearCookie,
+		},
 	});
 }
 
@@ -106,7 +143,7 @@ export default function BecomeASpeaker() {
 			<Form method="post" encType="multipart/form-data" className="form" noValidate={false}>
 				{errors.form && <p className="error" role="alert">{errors.form}</p>}
 				<div className="hp" aria-hidden="true"><label>Website<input name="website" tabIndex={-1} autoComplete="off" /></label></div>
-				<ProfileFields values={values} errors={errors} />
+				<ProfileFields values={values} errors={errors} linkedinProfile={loaderData.linkedinProfile} linkedinMessage={loaderData.linkedinMessage} />
 				<fieldset className="panel">
 					<legend>Private contact (never public)</legend>
 					<Field label="Email" error={errors.email}><input type="email" name="email" required maxLength={254} defaultValue={values.email} autoComplete="email" /></Field>
