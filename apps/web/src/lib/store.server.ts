@@ -69,6 +69,13 @@ const databaseUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL;
 const sql = databaseUrl ? neon(databaseUrl) : null;
 let databaseReady: Promise<void> | null = null;
 
+/** Vercel function filesystems are ephemeral and are not shared between instances. */
+const assertPersistentDatabase = (): void => {
+	if (!sql && process.env.NODE_ENV === 'production') {
+		throw new Error('Persistent database is not configured. Set POSTGRES_URL or DATABASE_URL for this production deployment.');
+	}
+};
+
 const ensureDatabase = async (): Promise<void> => {
 	if (!sql) {
 		return;
@@ -126,6 +133,7 @@ const persist = async (db: Db): Promise<void> => {
 };
 
 export const readDb = async (): Promise<Readonly<Db>> => {
+	assertPersistentDatabase();
 	if (sql) {
 		await ensureDatabase();
 		const [row] = await sql`SELECT data FROM ais_app_state WHERE singleton = 1`;
@@ -159,6 +167,7 @@ const mutatePostgres = async <T>(fn: (db: Db) => T | Promise<T>): Promise<T> => 
 };
 
 export const putPhotoData = async (name: string, base64: string): Promise<void> => {
+	assertPersistentDatabase();
 	if (sql) {
 		await ensureDatabase();
 		await sql`INSERT INTO ais_speaker_photos (file_name, data_base64)
@@ -172,6 +181,7 @@ export const putPhotoData = async (name: string, base64: string): Promise<void> 
 };
 
 export const getPhotoData = async (name: string): Promise<Buffer | null> => {
+	assertPersistentDatabase();
 	if (sql) {
 		await ensureDatabase();
 		const [row] = await sql`SELECT data_base64 FROM ais_speaker_photos WHERE file_name = ${name}`;
@@ -186,6 +196,7 @@ export const getPhotoData = async (name: string): Promise<Buffer | null> => {
 };
 
 export const deletePhotoData = async (name: string): Promise<void> => {
+	assertPersistentDatabase();
 	if (sql) {
 		await ensureDatabase();
 		await sql`DELETE FROM ais_speaker_photos WHERE file_name = ${name}`;
@@ -197,6 +208,7 @@ export const deletePhotoData = async (name: string): Promise<void> => {
 
 /** Runs `fn` against the database exclusively, then saves. A throw leaves the file untouched. */
 export const mutateDb = <T>(fn: (db: Db) => T | Promise<T>): Promise<T> => {
+	assertPersistentDatabase();
 	if (sql) {
 		return mutatePostgres(fn);
 	}
