@@ -51,7 +51,7 @@ export default defineConfig({
 		},
 	},
 	ssr: {
-		noExternal: ['sanitize-html', 'htmlparser2', 'escape-string-regexp', 'is-plain-object'],
+		noExternal: ['sanitize-html', 'htmlparser2', 'escape-string-regexp', 'is-plain-object', 'launder', 'parse-srcset', 'postcss', 'dayjs', 'nanoid', 'picocolors', 'source-map-js', 'domelementtype', 'domhandler', 'domutils', 'dom-serializer', 'entities'],
 	},
 	preview: {
 		port: 3000,
